@@ -14,7 +14,7 @@ public class LevelChunk
         for (int i = 0; i < length; i++)
             map.Add(new Block[MakeLevel.sides, MakeLevel.DEPTH]);
 
-        GenerateRandomMap();
+        GeneratePlainMap();
     }
 
     public Block[,] GetNextRow()
