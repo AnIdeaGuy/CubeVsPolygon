@@ -149,8 +149,8 @@ public class PlayahMove : MonoBehaviour
     {
         Vector2 posPlus = transform.position;
         posPlus += GetDown() * Time.deltaTime;
-        Block what = DoCollisions.WhatHit(posPlus, transform.localScale, -transform.rotation.eulerAngles.z * Mathf.Deg2Rad);
-        switch (what)
+        Block what = DoCollisions.WhatHit(posPlus, transform.localScale, transform.rotation.eulerAngles.z);
+		switch (what)
         {
             case Block.GROUND:
                 if (!hitD)
@@ -179,7 +179,7 @@ public class PlayahMove : MonoBehaviour
         Vector3 pos;
         Vector2 posPlus = transform.position;
         //posPlus += (-upVelocity + GRAVITY) * GetDown() * Time.deltaTime;
-        pos = DoCollisions.ContactPoint(posPlus, transform.localScale, -transform.rotation.eulerAngles.z * Mathf.Deg2Rad);
+        pos = DoCollisions.ContactPoint(posPlus, transform.localScale, transform.rotation.eulerAngles.z);
         transform.position = new Vector3(pos.x, pos.y, transform.position.z);
     }
 

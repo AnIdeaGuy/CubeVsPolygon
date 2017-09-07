@@ -10,16 +10,16 @@ public class DoCollisions : MonoBehaviour
     {
         foreach (GameObject obj in hitMe)
         {
-            Block blok = obj.GetComponent<Blocky>().myType;
-            Vector2 posB = obj.transform.position;
-            Vector2 scaleB = obj.transform.localScale;
-            float rotB = obj.transform.eulerAngles.z * Mathf.Deg2Rad;
+			Block blok = obj.GetComponent<Blocky> ().myType;
+			Vector2 posB = obj.transform.position;
+			Vector2 scaleB = obj.transform.localScale;
+			float rotB = obj.transform.eulerAngles.z;
 
-            Recto rectP = new Recto(posP, size.x, size.y, angle);
-            Recto rectB = new Recto(posB, scaleB.y, scaleB.x, rotB);
+			Recto2 rectP = new Recto2 (posP, size, angle);
+			Recto2 rectB = new Recto2 (posB, scaleB, rotB);
 
-            if (BoxIntersect(rectP, rectB))
-                return blok;
+			if (rectP.DoesItHit (rectB))
+				return blok;
         }
         return Block.AIR;
     }
@@ -30,16 +30,16 @@ public class DoCollisions : MonoBehaviour
         {
             Vector2 posB = obj.transform.position;
             Vector2 scaleB = obj.transform.localScale;
-            float rotB = obj.transform.eulerAngles.z * Mathf.Deg2Rad;
+            float rotB = obj.transform.eulerAngles.z;
 
-            Recto rectP = new Recto(posP, size.x, size.y, angle);
-            Recto rectB = new Recto(posB, scaleB.x, scaleB.y, rotB);
+            Recto2 rectP = new Recto2(posP, size, angle);
+            Recto2 rectB = new Recto2(posB, scaleB, rotB);
 
-            if (BoxIntersect(rectP, rectB))
+			if (rectP.DoesItHit(rectB))
             {
                 Vector2 finalPoint = posB;
-                float radius = rectB.Width / 2 + rectP.Length / 2; // Gets the distance the player should be from the center of the box
-                float aang = rotB + Mathf.PI;
+				float radius = rectB.hsize.x + rectP.hsize.y; // Gets the distance the player should be from the center of the box
+				float aang = rotB * Mathf.Deg2Rad + Mathf.PI;
                 finalPoint.x += Mathf.Cos(aang) * radius;
                 finalPoint.y += Mathf.Sin(aang) * radius;
                 return finalPoint;
@@ -47,123 +47,49 @@ public class DoCollisions : MonoBehaviour
         }
         return posP;
     }
-
-    /*Credit to Markus Jarderot for this function*/
-    static private bool BoxIntersect(Recto a, Recto b)
-    {
-        foreach (var polygon in new[] { a, b })
-        {
-            for (int i1 = 0; i1 < polygon.points.Length; i1++)
-            {
-                int i2 = (i1 + 1) % polygon.points.Length;
-                var p1 = polygon.points[i1];
-                var p2 = polygon.points[i2];
-
-                var normal = new Vector2(p2.y - p1.y, p1.x - p2.x);
-
-                double? minA = null, maxA = null;
-                foreach (var p in a.points)
-                {
-                    var projected = normal.x * p.x + normal.y * p.y;
-                    if (minA == null || projected < minA)
-                        minA = projected;
-                    if (maxA == null || projected > maxA)
-                        maxA = projected;
-                }
-
-                double? minB = null, maxB = null;
-                foreach (var p in b.points)
-                {
-                    var projected = normal.x * p.x + normal.y * p.y;
-                    if (minB == null || projected < minB)
-                        minB = projected;
-                    if (maxB == null || projected > maxB)
-                        maxB = projected;
-                }
-
-                if (maxA < minB || maxB < minA)
-                    return false;
-            }
-        }
-        return true;
-    }
 }
 
-/*Credit to mrtig for this class*/
-public class Recto
+public class Recto2
 {
-    public float Length;
-    public float Width;
-    public float Rotation;
-    public Vector2 Center;
-    public Vector2 TopLeft;
-    public Vector2 TopRight;
-    public Vector2 BottomLeft;
-    public Vector2 BottomRight;
-    public Vector2[] points = new Vector2[4];
+	public Vector2 position;
+	public Vector2 hsize;
+	public Vector2 min;
+	public Vector2 max;
+	public float rotation; // in degrees
 
-    public Recto(Vector2 _origin, float _width, float _length, float angle)
-    {
-        Length = _length;
-        Width = _width;
-        Center = _origin;
+	public Recto2(Vector2 _position, Vector2 _size, float _rotation)
+	{
+		position = _position;
+		hsize = _size / 2;
+		rotation = Mathf.Round(_rotation);
+	}
 
-        BottomLeft = new Vector2(Center.x - Width / 2, Center.y - Length / 2);
-        BottomRight = new Vector2(Center.x + Width / 2, Center.y - Length / 2);
-        TopLeft = new Vector2(Center.x - Width / 2, Center.y + Length / 2);
-        TopRight = new Vector2(Center.x + Width / 2, Center.y + Length / 2);
+	private void SetBounds ()
+	{
+		min = position - hsize;
+		max = position + hsize;
+	}
 
-        Rotate(angle);
-    }
+	public bool DoesItHit(Recto2 other)
+	{
+		if (rotation != other.rotation)
+			return false;
 
-    private void InitCorners(Vector2 c)
-    {
-        BottomRight.x = (BottomRight.x + c.x);
-        BottomRight.y = (BottomRight.y + c.y);
+		float radiusMe = Mathf.Sqrt ((position.x * position.x) + (position.y * position.y));
+		float radiusThem = Mathf.Sqrt ((other.position.x * other.position.x) + (other.position.y * other.position.y));
 
-        BottomLeft.x = (BottomLeft.x + c.x);
-        BottomLeft.y = (BottomLeft.y + c.y);
+		// Straightens out the Rectos
 
-        TopRight.x = (TopRight.x + c.x);
-        TopRight.y = (TopRight.y + c.y);
+		Debug.Log (position.x + " vs " + other.position.x);
 
-        TopLeft.x = (TopLeft.x + c.x);
-        TopLeft.y = (TopLeft.y + c.y);
+		position.x -= Mathf.Cos (rotation * Mathf.Deg2Rad) * radiusMe;
+		position.y -= Mathf.Sin (rotation * Mathf.Deg2Rad) * radiusMe;
+		other.position.x -= Mathf.Cos (rotation * Mathf.Deg2Rad) * radiusThem;
+		other.position.y -= Mathf.Sin (rotation * Mathf.Deg2Rad) * radiusThem;
 
-        points[0] = BottomRight;
-        points[1] = TopRight;
-        points[2] = TopLeft;
-        points[3] = BottomLeft;
-    }
+		SetBounds ();
+		other.SetBounds ();
 
-    private void Move(Vector2 c)
-    {
-        InitCorners(new Vector2((c.x - Center.x), (c.y - Center.y)));
-        Center.x = Center.x + (c.x - Center.x);
-        Center.y = Center.y + (c.y - Center.y);
-    }
-
-    private void Rotate(float qtyRadians)
-    {
-        //Move center to origin
-        Vector2 temp_orig = new Vector2(Center.x, Center.y);
-        Move(new Vector2(0, 0));
-
-        BottomRight = RotatePoint(BottomRight, qtyRadians);
-        TopRight = RotatePoint(TopRight, qtyRadians);
-        BottomLeft = RotatePoint(BottomLeft, qtyRadians);
-        TopLeft = RotatePoint(TopLeft, qtyRadians);
-
-        //Move center back
-        Move(temp_orig);
-    }
-
-    private Vector2 RotatePoint(Vector2 p, float qtyRadians)
-    {
-        Vector2 temb_br = new Vector2(p.x, p.y);
-        p.x = temb_br.x * Mathf.Cos(qtyRadians) - temb_br.x * Mathf.Sin(qtyRadians);
-        p.y = temb_br.y * Mathf.Cos(qtyRadians) + temb_br.y * Mathf.Sin(qtyRadians);
-
-        return p;
-    }
+		return !(max.x < other.min.x || min.x > other.max.x || max.y < other.min.y || min.y > other.max.y);
+	}
 }
