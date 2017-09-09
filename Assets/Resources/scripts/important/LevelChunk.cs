@@ -51,6 +51,22 @@ public class LevelChunk
         // TODO: Making it fair
     }
 
+    public void GenerateHurdleMap()
+    {
+        for (int z = 0; z < length; z++)
+        {
+            for (int x = 0; x < MakeLevel.sides; x++)
+            {
+                map[z][x, 0] = Block.GROUND;
+                for (int y = 1; y < MakeLevel.DEPTH; y++)
+                    if (y < MakeLevel.DEPTH-1)
+                        map[z][x, y] = Block.AIR;
+                    else
+                        map[z][x, y] = Block.GROUND;
+            }
+        }
+    }
+
     private void RoughDraftGen()
     {
         List<int[]> heightMap = new List<int[]>();

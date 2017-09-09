@@ -8,6 +8,7 @@ public class PlayahMove : MonoBehaviour
     public bool gravOn = false;
     public GameObject cubo;
 
+    public Polar loc;
     private float gacc = 0;
     private bool hitD = false;
     private float upVelocity = 0;
@@ -19,6 +20,7 @@ public class PlayahMove : MonoBehaviour
     private const float STEP_SPEED = 6.0f;
     public const float JUMP_STRENGTH = 17.0f;
     private const float GRAVITY = 40.0f;
+    private const float posMultiple = .05f;
 
     private float danceProg = 0;
     private float danceRate = .4f;
@@ -28,6 +30,9 @@ public class PlayahMove : MonoBehaviour
         Vector3 rot = transform.rotation.eulerAngles;
         rot.z = -90;
         transform.rotation = Quaternion.Euler(rot);
+        loc = new Polar(-Mathf.PI / 2, 0);
+
+        // TODO: Replace cartesian with polar. It'll be cleaner
 	}
 
     void Update()
@@ -178,7 +183,7 @@ public class PlayahMove : MonoBehaviour
     {
         Vector3 pos;
         Vector2 posPlus = transform.position;
-        //posPlus += (-upVelocity + GRAVITY) * GetDown() * Time.deltaTime;
+        posPlus += GetDown() * Time.deltaTime;
         pos = DoCollisions.ContactPoint(posPlus, transform.localScale, transform.rotation.eulerAngles.z);
         transform.position = new Vector3(pos.x, pos.y, transform.position.z);
     }

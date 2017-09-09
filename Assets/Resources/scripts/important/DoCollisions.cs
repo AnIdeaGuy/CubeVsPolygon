@@ -15,10 +15,10 @@ public class DoCollisions : MonoBehaviour
 			Vector2 scaleB = obj.transform.localScale;
 			float rotB = obj.transform.eulerAngles.z;
 
-			Recto2 rectP = new Recto2 (posP, size, angle);
-			Recto2 rectB = new Recto2 (posB, scaleB, rotB);
+			Recto rectP = new Recto(posP, size.y, angle);
+			Recto rectB = new Recto(posB, scaleB.x, rotB);
 
-			if (rectP.DoesItHit (rectB))
+			if (rectP.DoesItHit(rectB))
 				return blok;
         }
         return Block.AIR;
@@ -32,13 +32,13 @@ public class DoCollisions : MonoBehaviour
             Vector2 scaleB = obj.transform.localScale;
             float rotB = obj.transform.eulerAngles.z;
 
-            Recto2 rectP = new Recto2(posP, size, angle);
-            Recto2 rectB = new Recto2(posB, scaleB, rotB);
+            Recto rectP = new Recto(posP, size.y, angle);
+            Recto rectB = new Recto(posB, scaleB.x, rotB);
 
 			if (rectP.DoesItHit(rectB))
             {
                 Vector2 finalPoint = posB;
-				float radius = rectB.hsize.x + rectP.hsize.y; // Gets the distance the player should be from the center of the box
+				float radius = rectB.hsize.r + rectP.hsize.r; // Gets the distance the player should be from the center of the box
 				float aang = rotB * Mathf.Deg2Rad + Mathf.PI;
                 finalPoint.x += Mathf.Cos(aang) * radius;
                 finalPoint.y += Mathf.Sin(aang) * radius;
@@ -49,47 +49,31 @@ public class DoCollisions : MonoBehaviour
     }
 }
 
-public class Recto2
+public class Recto
 {
-	public Vector2 position;
-	public Vector2 hsize;
-	public Vector2 min;
-	public Vector2 max;
-	public float rotation; // in degrees
+    public Polar position;
+    public Polar hsize;
+    public Polar min;
+    public Polar max;
 
-	public Recto2(Vector2 _position, Vector2 _size, float _rotation)
-	{
-		position = _position;
-		hsize = _size / 2;
-		rotation = Mathf.Round(_rotation);
-	}
+    public Recto(Vector2 _position, float height, float _rotation)
+    {
+        float transr = Mathf.Sqrt(_position.x * _position.x + _position.y * _position.y);
+        position = new Polar(Mathf.Round(_rotation), transr);
+        hsize = new Polar(Mathf.PI / MakeLevel.sides, height / 2);
+        min = new Polar(position.a - hsize.a, position.r - hsize.r);
+        max = new Polar(position.a + hsize.a, position.r + hsize.r);
+    }
 
-	private void SetBounds ()
-	{
-		min = position - hsize;
-		max = position + hsize;
-	}
+    public bool DoesItHit(Recto other)
+    {
 
-	public bool DoesItHit(Recto2 other)
-	{
-		if (rotation != other.rotation)
-			return false;
+        float difference = Mathf.Abs(position.a - other.position.a) % 360;
 
-		float radiusMe = Mathf.Sqrt ((position.x * position.x) + (position.y * position.y));
-		float radiusThem = Mathf.Sqrt ((other.position.x * other.position.x) + (other.position.y * other.position.y));
+        if (difference > 180)
+            difference = 360 - difference;
 
-		// Straightens out the Rectos
-
-		Debug.Log (position.x + " vs " + other.position.x);
-
-		position.x -= Mathf.Cos (rotation * Mathf.Deg2Rad) * radiusMe;
-		position.y -= Mathf.Sin (rotation * Mathf.Deg2Rad) * radiusMe;
-		other.position.x -= Mathf.Cos (rotation * Mathf.Deg2Rad) * radiusThem;
-		other.position.y -= Mathf.Sin (rotation * Mathf.Deg2Rad) * radiusThem;
-
-		SetBounds ();
-		other.SetBounds ();
-
-		return !(max.x < other.min.x || min.x > other.max.x || max.y < other.min.y || min.y > other.max.y);
-	}
+        float slice = 360 / MakeLevel.sides / 4;
+        return difference < slice && !(max.r < other.min.r || min.r > other.max.r);
+    }
 }
