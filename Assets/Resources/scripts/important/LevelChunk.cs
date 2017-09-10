@@ -14,7 +14,7 @@ public class LevelChunk
         for (int i = 0; i < length; i++)
             map.Add(new Block[MakeLevel.sides, MakeLevel.DEPTH]);
 
-        GeneratePlainMap();
+        GenerateHurdleMap();
     }
 
     public Block[,] GetNextRow()
@@ -61,7 +61,7 @@ public class LevelChunk
                 for (int y = 1; y < MakeLevel.DEPTH; y++)
                     if (y < MakeLevel.DEPTH-1)
                         map[z][x, y] = Block.AIR;
-                    else
+                    else if (z == length - 1)
                         map[z][x, y] = Block.GROUND;
             }
         }
