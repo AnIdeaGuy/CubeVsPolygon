@@ -8,7 +8,11 @@ public class PlayahMove : MonoBehaviour
     public bool gravOn = false;
     public GameObject cubo;
 
+    /// <summary>
+    /// The player position in polar coordinates
+    /// </summary>
     public Polar loc;
+    public float locZ;
     private float gacc = 0;
     private bool hitD = false;
     private float upVelocity = 0;
@@ -38,6 +42,15 @@ public class PlayahMove : MonoBehaviour
     {
         TheInput();
 
+        float x = transform.position.x;
+        float y = transform.position.y;
+        float r = Mathf.Sqrt(x * x + y * y);
+        float a = transform.rotation.eulerAngles.z * Mathf.Deg2Rad;
+        // Allows for a negative radius
+        if (Utils.AngleDifference(a, Mathf.Atan2(y, x), true) > Mathf.PI / 2)
+            r = -r;
+        loc = new Polar(a, r);
+        locZ = transform.position.z;
         if (sidestepDir != 0)
             Sidestep();
         else
@@ -45,11 +58,12 @@ public class PlayahMove : MonoBehaviour
 
         if (gravOn)
         {
-            Vector2 pos = transform.position;
-            pos += (-upVelocity + gacc) * GetDown() * Time.deltaTime;
-            transform.position = new Vector3(pos.x, pos.y, transform.position.z);
+            loc.r += (-upVelocity + gacc) * Time.deltaTime;
             Collision();
         }
+
+        transform.position = new Vector3(Mathf.Cos(loc.a) * loc.r, Mathf.Sin(loc.a) * loc.r, locZ);
+        transform.rotation = Quaternion.Euler(0, 0, loc.a * Mathf.Rad2Deg);
     }
 
     private void TheInput()
@@ -124,16 +138,9 @@ public class PlayahMove : MonoBehaviour
             if (sidestepProg > 1)
                 sidestepProg = 1;
             float doAngle = prestep + dir * Mathf.PI * 2 / MakeLevel.sides * sidestepProg;
-            Vector3 pos = transform.position;
-            Vector3 rot = transform.rotation.eulerAngles;
             Vector3 crot = cubo.transform.localRotation.eulerAngles;
-            rot.z = doAngle * Mathf.Rad2Deg;
-            sidestepRadius += (-upVelocity + gacc) * Time.deltaTime; // Applying gravity during rotation
-            pos.x = Mathf.Cos(doAngle) * sidestepRadius;
-            pos.y = Mathf.Sin(doAngle) * sidestepRadius;
+            loc.a = doAngle;
             crot.z = 90 * -dir * sidestepProg;
-            transform.position = pos;
-            transform.rotation = Quaternion.Euler(rot);
             cubo.transform.localRotation = Quaternion.Euler(crot);
         }
         if (sidestepProg == 1)
@@ -151,9 +158,8 @@ public class PlayahMove : MonoBehaviour
 
     private void Collision()
     {
-        Vector2 posPlus = transform.position;
-        posPlus += GetDown() * Time.deltaTime;
-        Block what = DoCollisions.WhatHit(posPlus, transform.localScale, transform.rotation.eulerAngles.z);
+        Polar posPlus = new Polar(loc.a * Mathf.Rad2Deg, loc.r + Time.deltaTime);
+        Block what = DoCollisions.WhatHit(posPlus, transform.localScale);
 		switch (what)
         {
             case Block.GROUND:
@@ -172,28 +178,16 @@ public class PlayahMove : MonoBehaviour
         }
     }
 
-    private Vector2 GetDown()
-    {
-        float rot = transform.rotation.eulerAngles.z * Mathf.Deg2Rad;
-        return new Vector2(Mathf.Cos(rot), Mathf.Sin(rot));
-    }
-
     private void SnapToGround()
     {
-        Vector3 pos;
-        Vector2 posPlus = transform.position;
-        posPlus += GetDown() * Time.deltaTime;
-        pos = DoCollisions.ContactPoint(posPlus, transform.localScale, transform.rotation.eulerAngles.z);
-        transform.position = new Vector3(pos.x, pos.y, transform.position.z);
+        Polar posPlus = new Polar(loc.a * Mathf.Rad2Deg, loc.r + Time.deltaTime);
+        loc = DoCollisions.ContactPointDown(posPlus, transform.localScale);
     }
 
     private void SetStepStart()
     {
         sidestepProg = 0;
-        float x = transform.position.x;
-        float y = transform.position.y;
-        sidestepRadius = Mathf.Sqrt(x * x + y * y);
-        prestep = transform.rotation.eulerAngles.z * Mathf.Deg2Rad;
+        prestep = loc.a;
         if (hitD)
             upVelocity = JUMP_STRENGTH;
         danceProg = 0;

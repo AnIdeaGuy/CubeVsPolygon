@@ -28,6 +28,18 @@ public class Utils
     {
         return new Polar(RoundSpec(roundMe.a, toValue), RoundSpec(roundMe.r, toValue));
     }
+
+    static public float AngleDifference(float a, float b, bool inRadians = false)
+    {
+        float a2 = inRadians ? a * Mathf.Rad2Deg : a;
+        float b2 = inRadians ? b * Mathf.Rad2Deg : b;
+        float difference = Mathf.Abs(a2 - b2) % 360;
+
+        if (difference > 180)
+            difference = 360 - difference;
+
+        return inRadians ? difference * Mathf.Deg2Rad : difference;
+    }
 }
 
 public struct Polar
