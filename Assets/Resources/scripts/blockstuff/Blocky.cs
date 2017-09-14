@@ -15,12 +15,12 @@ public class Blocky : MonoBehaviour
         if (pos.z < MakeLevel.awakeZ && !DoCollisions.hitMe.Contains(gameObject))
             DoCollisions.hitMe.Add(gameObject);
 
-        if (pos.z < MakeLevel.awakeZ - MakeLevel.blockSize.z * 1.5f)
-            if (DoCollisions.hitMe.Contains(gameObject))
-                DoCollisions.hitMe.Remove(gameObject);
-
         /*Destroys the objerct when it's off screen*/
         if (pos.z < MakeLevel.killZ)
+        {
+            if (DoCollisions.hitMe.Contains(gameObject))
+               DoCollisions.hitMe.Remove(gameObject);
             Destroy(gameObject);
+        }
     }
 }

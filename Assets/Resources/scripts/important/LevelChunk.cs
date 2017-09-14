@@ -59,10 +59,17 @@ public class LevelChunk
             {
                 map[z][x, 0] = Block.GROUND;
                 for (int y = 1; y < MakeLevel.DEPTH; y++)
-                    if (y < MakeLevel.DEPTH-1)
+                {
+                    if (Mathf.Floor(z % ((length - 1) / 2)) == 0 && z != 0)
+                    {
+                        if (y == MakeLevel.DEPTH - 1)
+                            map[z][x, y] = Block.SPIKE;
+                        else
+                            map[z][x, y] = Block.GROUND;
+                    }
+                    else
                         map[z][x, y] = Block.AIR;
-                    else if (z == length - 1)
-                        map[z][x, y] = Block.GROUND;
+                }
             }
         }
     }

@@ -18,25 +18,26 @@ public class PlayahMove : MonoBehaviour
     private float upVelocity = 0;
     private float sidestepProg = 1;
     private float prestep = 0;
-    private float sidestepRadius = 0;
     private int sidestepDir = 0;
     private int ssdBuffer = 0;
     private const float STEP_SPEED = 6.0f;
     public const float JUMP_STRENGTH = 17.0f;
     private const float GRAVITY = 40.0f;
     private const float posMultiple = .05f;
+    private const float goalZ = -5.0f;
+    private const float goalSpeed = 2.0f;
 
     private float danceProg = 0;
     private float danceRate = .4f;
 
-	void Start ()
+    void Start()
     {
         Vector3 rot = transform.rotation.eulerAngles;
         rot.z = -90;
         transform.rotation = Quaternion.Euler(rot);
 
         // TODO: Replace cartesian with polar. It'll be cleaner
-	}
+    }
 
     void Update()
     {
@@ -60,6 +61,11 @@ public class PlayahMove : MonoBehaviour
         {
             loc.r += (-upVelocity + gacc) * Time.deltaTime;
             Collision();
+        }
+
+        if (locZ < MakeLevel.pKillZ)
+        {
+            // TODO: Game Over
         }
 
         transform.position = new Vector3(Mathf.Cos(loc.a) * loc.r, Mathf.Sin(loc.a) * loc.r, locZ);
@@ -158,9 +164,10 @@ public class PlayahMove : MonoBehaviour
 
     private void Collision()
     {
-        Polar posPlus = new Polar(loc.a * Mathf.Rad2Deg, loc.r + Time.deltaTime);
-        Block what = DoCollisions.WhatHit(posPlus, transform.localScale);
-		switch (what)
+        Polar loc2 = loc.ToDeg();
+        loc2.r += Time.deltaTime;
+        Block what = DoCollisions.WhatHit(loc2, locZ + .1f, transform.localScale);
+        switch (what)
         {
             case Block.GROUND:
                 if (!hitD)
@@ -170,18 +177,61 @@ public class PlayahMove : MonoBehaviour
                     gacc = 0;
                 }
                 SnapToGround();
+                SnapToWall();
                 break;
             default:
                 hitD = false;
-                gacc += GRAVITY * Time.deltaTime;
+                DoGravity();
                 break;
         }
+
+        if (!SnapToWall(false))
+            MoveToGoalZ();
     }
 
-    private void SnapToGround()
+    private void MoveToGoalZ()
     {
-        Polar posPlus = new Polar(loc.a * Mathf.Rad2Deg, loc.r + Time.deltaTime);
-        loc = DoCollisions.ContactPointDown(posPlus, transform.localScale);
+        if (locZ < goalZ)
+            locZ += goalSpeed * Time.deltaTime;
+        if (locZ > goalZ)
+            locZ = goalZ;
+    }
+
+    private void DoGravity()
+    {
+        gacc += GRAVITY * Time.deltaTime;
+    }
+
+    private bool CheckGround()
+    {
+        Polar loc2 = loc.ToDeg();
+        loc2.r += Time.deltaTime;
+        Vector3 fakeScale = transform.localScale;
+        fakeScale.z /= 4;
+        loc2 = DoCollisions.ContactPointDown(loc2, locZ, fakeScale);
+        return Utils.RoundSpec(loc.r, .1f) != Utils.RoundSpec(loc2.r, .1f);
+    }
+
+    private bool SnapToGround(bool changeRadius = true)
+    {
+        Polar loc2 = loc.ToDeg();
+        loc2.r += Time.deltaTime;
+        loc2 = DoCollisions.ContactPointDown(loc2, locZ, transform.localScale);
+        if (loc.r == loc2.r)
+            return false;
+        if (changeRadius)
+            loc = loc2;
+        return true;
+    }
+
+    private bool SnapToWall(bool changeZ = true)
+    {
+        float tempZ = DoCollisions.ContactPointForward(loc.ToDeg(), locZ, transform.localScale);
+        if (tempZ == locZ)
+            return false;
+        if (changeZ)
+            locZ = tempZ;
+        return true;
     }
 
     private void SetStepStart()

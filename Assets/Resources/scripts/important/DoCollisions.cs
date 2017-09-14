@@ -6,20 +6,57 @@ public class DoCollisions : MonoBehaviour
 {
     static public List<GameObject> hitMe = new List<GameObject>();
 
-    static public Block WhatHit(Polar posP, Vector2 size)
+    static public Block WhatHit(Polar posP, float z, Vector3 size)
     {
         foreach (GameObject obj in hitMe)
         {
-			Block blok = obj.GetComponent<Blocky> ().myType;
-			float rotB = obj.transform.eulerAngles.z;
+            Block blok = obj.GetComponent<Blocky>().myType;
+            float rotB = obj.transform.eulerAngles.z;
 
-			Recto rectP = new Recto(posP, size.y);
+            Recto rectP = new Recto(posP, size.y);
             Recto rectB = GetRecto(obj);
 
-			if (rectP.DoesItHit(rectB))
-				return blok;
+            if (HitZ(z, size.z, obj) && rectP.DoesItHit(rectB))
+                return blok;
         }
         return Block.AIR;
+    }
+
+    static public Polar ContactPointDown(Polar posP, float z, Vector3 size)
+    {
+        foreach (GameObject obj in hitMe)
+        {
+            float rotB = obj.transform.eulerAngles.z;
+
+            Recto rectP = new Recto(posP, size.y);
+            Recto rectB = GetRecto(obj);
+
+            if (HitZ(z, size.z, obj) && rectP.DoesItHit(rectB))
+            {
+                float radius = rectB.hsize.r + rectP.hsize.r; // Gets the distance the player should be from the center of the box
+                return new Polar(rotB * Mathf.Deg2Rad, rectB.position.r - radius);
+            }
+        }
+        return posP.ToRad();
+    }
+
+    static public float ContactPointForward(Polar posP, float z, Vector3 size)
+    {
+        foreach (GameObject obj in hitMe)
+        {
+            float rotB = obj.transform.eulerAngles.z;
+            Polar posP2 = posP;
+            posP2.r -= .1f;
+            Recto rectP = new Recto(posP2, size.y);
+            Recto rectB = GetRecto(obj);
+
+            if (HitZ(z + .1f, size.z, obj, true) && rectP.DoesItHitF(rectB))
+            {
+                float forward = obj.transform.localScale.z / 2 + size.z / 2;
+                return obj.transform.position.z - forward;
+            }
+        }
+        return z;
     }
 
     static private Recto GetRecto(GameObject obj)
@@ -30,25 +67,19 @@ public class DoCollisions : MonoBehaviour
         return new Recto(new Polar(obj.transform.rotation.eulerAngles.z, r), obj.transform.localScale.y);
     }
 
-    static public Polar ContactPointDown(Polar posP, Vector2 size)
+    static private bool HitZ(float pz, float pl, GameObject b, bool forward = false)
     {
-        foreach (GameObject obj in hitMe)
-        {
-            float rotB = obj.transform.eulerAngles.z;
+        float phalf = pl / 2;
+        float bhalf = b.transform.localScale.z / 2;
+        float pMax = pz + phalf;
+        float pMin = pz - phalf;
+        float bMax = b.transform.position.z + bhalf;
+        float bMin = b.transform.position.z - bhalf;
 
-            Recto rectP = new Recto(posP, size.y);
-            Recto rectB = GetRecto(obj);
-
-            if (rectP.DoesItHit(rectB))
-            {
-                Polar finalPoint = rectB.position;
-				float radius = rectB.hsize.r + rectP.hsize.r; // Gets the distance the player should be from the center of the box
-                finalPoint.r -= radius;
-                finalPoint.a = rotB * Mathf.Deg2Rad;
-                return finalPoint;
-            }
-        }
-        return posP;
+        if (forward)
+            return pMax >= bMin && bMax > pMin;
+        else
+            return pMax > bMin && pMin < bMax;
     }
 }
 
@@ -70,7 +101,14 @@ public class Recto
     public bool DoesItHit(Recto other)
     {
         float difference = Utils.AngleDifference(position.a, other.position.a);
+        float slice = 360 / MakeLevel.sides / 3;
+        return difference < slice && max.r > other.min.r && min.r < other.max.r;
+    }
+
+    public bool DoesItHitF(Recto other)
+    {
+        float difference = Utils.AngleDifference(position.a, other.position.a);
         float slice = 360 / MakeLevel.sides / 4;
-        return difference < slice && !(max.r < other.min.r || min.r > other.max.r);
+        return difference < slice && max.r > other.min.r && min.r < other.max.r;
     }
 }

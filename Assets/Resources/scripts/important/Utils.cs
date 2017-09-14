@@ -51,4 +51,14 @@ public struct Polar
         a = _a;
         r = _r;
     }
+
+    public Polar ToDeg()
+    {
+        return new Polar(a * Mathf.Rad2Deg, r);
+    }
+
+    public Polar ToRad()
+    {
+        return new Polar(a * Mathf.Deg2Rad, r);
+    }
 }

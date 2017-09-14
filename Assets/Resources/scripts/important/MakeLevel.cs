@@ -6,9 +6,9 @@ public enum Block { AIR, GROUND, SPIKE };
 
 public class MakeLevel : MonoBehaviour
 {
-   /// <summary>
-   /// Enum Block is for spawning spaces.
-   /// </summary>
+    /// <summary>
+    /// Enum Block is for spawning spaces.
+    /// </summary>
     public GameObject spike;
     public GameObject ground;
 
@@ -19,22 +19,23 @@ public class MakeLevel : MonoBehaviour
     /// <summary>
     /// The thing that determines the new row of shit to be spawned.
     /// </summary>
-    private Block[,] spawnBar = new Block[sides,DEPTH]; // NOTE: x wraps around the pipe, y goes toward the center.
+    private Block[,] spawnBar = new Block[sides, DEPTH]; // NOTE: x wraps around the pipe, y goes toward the center.
     private float progress = 0.0f;
     private float progressSinceLast = 0.0f;
-    static public float speed = 4.0f;
-    static public float killZ = -10.0f;
-    static public float awakeZ = -4.0f;
+    static public float speed = 6.0f;
+    static public float killZ = -12.0f;
+    static public float pKillZ = -10.0f;
+    static public float awakeZ = -3.0f;
     static public float superRadius = 0;
     private LevelChunk currentChunk;
 
-	void Start ()
+    void Start()
     {
 
         MakeRandomChunk();
-	}
-	
-	void Update ()
+    }
+
+    void Update()
     {
         float changeInZ = speed * Time.deltaTime;
         progress += changeInZ;
@@ -45,7 +46,7 @@ public class MakeLevel : MonoBehaviour
             DetermineSpawn();
             SpawnThem(progressSinceLast);
         }
-	}
+    }
 
     void DetermineSpawn()
     {
@@ -55,18 +56,13 @@ public class MakeLevel : MonoBehaviour
             MakeRandomChunk();
             row = currentChunk.GetNextRow();
         }
-            spawnBar = row;
-        /*for (int i = 0; i < sides; i++)
-        {
-            spawnBar[i, 0] = Block.GROUND;
-            spawnBar[i, 1] = Block.AIR;
-            spawnBar[i, 2] = Block.AIR;
-        }*/
+        spawnBar = row;
     }
 
     void SpawnThem(float extra)
     {
-        float radius = blockSize.x / (2 * Mathf.Sin(Mathf.PI / sides));
+        float radius = GetRadius(sides);
+        radius = Mathf.Max(radius, GetRadius(10));
         superRadius = radius;
         for (int i = 0; i < sides; i++)
             for (int w = 0; w < DEPTH; w++)
@@ -75,14 +71,14 @@ public class MakeLevel : MonoBehaviour
                 float newRadius = radius + blockSize.y / 2 - blockSize.y * w;
                 Vector3 realPos = new Vector3(Mathf.Cos(rot) * newRadius, Mathf.Sin(rot) * newRadius, START_Z - extra);
                 Quaternion realRot = Quaternion.Euler(new Vector3(0, 0, rot * Mathf.Rad2Deg));
-                if (spawnBar[i,w] != Block.AIR)
+                if (spawnBar[i, w] != Block.AIR)
                     Instantiate(Block2Obj(spawnBar[i, w]), realPos, realRot);
             }
     }
 
     private void MakeRandomChunk()
     {
-        currentChunk = new LevelChunk((int)Mathf.Round(Random.Range(4, 10)));
+        currentChunk = new LevelChunk((int)Mathf.Round(Random.Range(4, 10)) * 2);
     }
 
     GameObject Block2Obj(Block blok)
@@ -96,5 +92,10 @@ public class MakeLevel : MonoBehaviour
             default:
                 return null;
         }
+    }
+
+    float GetRadius(int _sides)
+    {
+        return blockSize.x / (2 * Mathf.Sin(Mathf.PI / _sides));
     }
 }
