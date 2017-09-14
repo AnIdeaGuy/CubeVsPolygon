@@ -156,12 +156,13 @@ public class ChunkConverter : MonoBehaviour
 
     public void LoadChunk()
     {
-        for (int i = transform.childCount - 1; i > 0; i--)
-        {
-            GameObject obj = transform.GetChild(i).gameObject;
-            if (obj.GetComponent<FakeBlock>() != null)
-                Destroy(obj);
-        }
+        if (inEditor)
+            for (int i = transform.childCount - 1; i > 0; i--)
+            {
+                GameObject obj = transform.GetChild(i).gameObject;
+                if (obj.GetComponent<FakeBlock>() != null)
+                    Destroy(obj);
+            }
 
         LoadXML();
         if (_data.ToString() != "")

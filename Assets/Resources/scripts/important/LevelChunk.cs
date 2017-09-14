@@ -4,17 +4,78 @@ using UnityEngine;
 
 public class LevelChunk
 {
-    private int length;
+    public int length;
     public List<Block[,]> map = new List<Block[,]>();
     private int at = 0;
+    public int sidesMinimum;
 
     public LevelChunk(int _length)
     {
         length = _length;
         for (int i = 0; i < length; i++)
             map.Add(new Block[MakeLevel.sides, MakeLevel.DEPTH]);
+        sidesMinimum = MakeLevel.sides;
+        GeneratePlainMap();
+    }
 
-        GenerateHurdleMap();
+    public LevelChunk(List<List<List<Block>>> _map)
+    {
+        length = _map[0][0].Count;
+        SetRawMap(_map);
+    }
+
+    public LevelChunk(List<Block[,]> _map)
+    {
+        length = _map.Count;
+        Block[][,] copy2Me = new Block[_map.Count][,];
+        _map.CopyTo(copy2Me);
+        foreach (Block[,] b in copy2Me)
+            map.Add(b);
+    }
+
+    public void Init()
+    {
+        List<Block[,]> map2 = new List<Block[,]>();
+        List<Block[,]> map3 = new List<Block[,]>();
+        for (int z = 0; z < length; z++)
+        {
+            map2.Add(new Block[MakeLevel.sides, MakeLevel.DEPTH]);
+            map3.Add(new Block[MakeLevel.sides, MakeLevel.DEPTH]);
+        }
+
+        for (int z = 0; z < length; z++)
+        {
+            for (int x = 0; x < sidesMinimum; x++)
+                for (int y = 0; y < MakeLevel.DEPTH; y++)
+                {
+                    map2[z][x, y] = map[z][x, y];
+                    map3[z][x, y] = map[z][x, y];
+                }
+            for (int x = sidesMinimum - 1; x < MakeLevel.sides; x++)
+            {
+                map2[z][x, 0] = Block.GROUND;
+                map3[z][x, 0] = Block.GROUND;
+                for (int y = 1; y < MakeLevel.DEPTH; y++)
+                {
+                    map2[z][x, y] = Block.AIR;
+                    map3[z][x, y] = Block.AIR;
+                }
+            }
+        }
+
+        map = map2;
+
+        // Rotate the map
+
+        int offset = (int)Mathf.Round(Random.Range(0, MakeLevel.sides));
+
+        for (int z = 0; z < length; z++)
+            for (int x = 0; x < MakeLevel.sides; x++)
+                for (int y = 0; y < MakeLevel.DEPTH; y++)
+                {
+                   
+                    map[z][x, y] = map3[z][(x + offset) % MakeLevel.sides, y];
+                }
     }
 
     public Block[,] GetNextRow()
@@ -26,9 +87,23 @@ public class LevelChunk
         return map[preAt];
     }
 
-    public void UseFileAsMap(string file)
+    public void SetRawMap(List<List<List<Block>>> _map)
     {
-        // TODO: Everything involving this
+        sidesMinimum = _map.Count;
+        for (int i = 0; i < length; i++)
+            map.Add(new Block[sidesMinimum, MakeLevel.DEPTH]);
+
+        for (int x = 0; x < sidesMinimum; x++)
+            for (int y = 0; y < MakeLevel.DEPTH; y++)
+                for (int z = 0; z < length; z++)
+                    map[z][x, y] = _map[x][y][z];
+    }
+
+    public LevelChunk Clone()
+    {
+        LevelChunk fresh = new LevelChunk(map);
+        fresh.sidesMinimum = sidesMinimum;
+        return fresh;
     }
 
     public void GeneratePlainMap()

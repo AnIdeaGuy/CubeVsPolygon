@@ -12,7 +12,7 @@ public class MakeLevel : MonoBehaviour
     public GameObject spike;
     public GameObject ground;
 
-    static public int sides = 12;
+    static public int sides = 10;
     public const int DEPTH = 3;
     static public Vector3 blockSize = new Vector3(2.0f, 1.0f, 1.0f);
     public const float START_Z = 12.0f;
@@ -29,9 +29,11 @@ public class MakeLevel : MonoBehaviour
     static public float superRadius = 0;
     private LevelChunk currentChunk;
 
+    private List<LevelChunk> allChunks = new List<LevelChunk>();
+
     void Start()
     {
-
+        LoadAllChunks();
         MakeRandomChunk();
     }
 
@@ -78,7 +80,8 @@ public class MakeLevel : MonoBehaviour
 
     private void MakeRandomChunk()
     {
-        currentChunk = new LevelChunk((int)Mathf.Round(Random.Range(4, 10)) * 2);
+        currentChunk = allChunks[(int)Mathf.Round(Random.Range(0, allChunks.Count-1))].Clone();
+        currentChunk.Init();
     }
 
     GameObject Block2Obj(Block blok)
@@ -97,5 +100,18 @@ public class MakeLevel : MonoBehaviour
     float GetRadius(int _sides)
     {
         return blockSize.x / (2 * Mathf.Sin(Mathf.PI / _sides));
+    }
+
+    public void LoadAllChunks()
+    {
+        LoadThis("furst");
+    }
+
+    public void LoadThis(string name)
+    {
+        ChunkConverter cc = gameObject.GetComponent<ChunkConverter>();
+        cc.SetFile(name);
+        cc.LoadChunk();
+        allChunks.Add(new LevelChunk(cc.CopyMap()));
     }
 }
