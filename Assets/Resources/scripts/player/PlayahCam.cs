@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Makes the cam follow the playah.
+/// </summary>
 public class PlayahCam : MonoBehaviour
 {
     public GameObject playah;

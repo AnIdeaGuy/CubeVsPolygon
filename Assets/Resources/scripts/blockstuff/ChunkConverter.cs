@@ -204,7 +204,7 @@ public class ChunkConverter : MonoBehaviour
 
     /*Everything below here is from the Unity wiki*/
 
-    /* The following metods came from the referenced URL */
+    /* The following methods came from the referenced URL */
     string UTF8ByteArrayToString(byte[] characters)
     {
         UTF8Encoding encoding = new UTF8Encoding();

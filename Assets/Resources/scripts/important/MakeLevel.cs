@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// The possible blocks that can be spawned.
+/// </summary>
 public enum Block { AIR, GROUND, SPIKE };
 
 public class MakeLevel : MonoBehaviour
 {
-    /// <summary>
-    /// Enum Block is for spawning spaces.
-    /// </summary>
     public GameObject spike;
     public GameObject ground;
 

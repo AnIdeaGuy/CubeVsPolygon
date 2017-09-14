@@ -4,111 +4,175 @@ using UnityEngine;
 
 public class DoCollisions : MonoBehaviour
 {
+    /// <summary>
+    /// All the objects that the player can collide with.
+    /// </summary>
     static public List<GameObject> hitMe = new List<GameObject>();
 
-    static public Block WhatHit(Polar posP, float z, Vector3 size)
+    /// <summary>
+    /// Takes the given position and size and sees if it collides with anything in "hitMe".
+    /// </summary>
+    /// <param name="position">The Polar position to place the object.</param>
+    /// <param name="positionZ">The z position to place the object.</param>
+    /// <param name="size">The size to assume of the object.</param>
+    /// <returns>Returns the Block type that the object collides with. (Block.AIR if there was no collision)</returns>
+    static public Block WhatBlockDidItHit(Polar position, float positionZ, Vector3 size)
     {
+        PolarBox boxA = new PolarBox(position, size.y); // The PolarBox to check collision against.
         foreach (GameObject obj in hitMe)
         {
             Block blok = obj.GetComponent<Blocky>().myType;
-            float rotB = obj.transform.eulerAngles.z;
 
-            Recto rectP = new Recto(posP, size.y);
-            Recto rectB = GetRecto(obj);
+            PolarBox boxB = GetPolarBox(obj); // The PolarBox that might collide with "boxA".
 
-            if (HitZ(z, size.z, obj) && rectP.DoesItHit(rectB))
+            if (HitZ(positionZ, size.z, obj) && boxA.DoesItHit(boxB))
                 return blok;
         }
         return Block.AIR;
     }
 
-    static public Polar ContactPointDown(Polar posP, float z, Vector3 size)
+    /// <summary>
+    /// The corrected polar coordinates place right on top of whatever block it hits inside hitMe.
+    /// </summary>
+    /// <param name="position">The Polar position to place the object.</param>
+    /// <param name="positionZ">The z position to place the object.</param>
+    /// <param name="size">The size to assume of the object.</param>
+    /// <returns>Returns the polar coordinates of where to place the object so it's outside of the collided object.</returns>
+    static public Polar ContactPointDown(Polar position, float positionZ, Vector3 size)
     {
+        PolarBox boxA = new PolarBox(position, size.y); // The PolarBox to check collision against.
         foreach (GameObject obj in hitMe)
         {
-            float rotB = obj.transform.eulerAngles.z;
+            float boxBRotation = obj.transform.eulerAngles.z;
+            PolarBox boxB = GetPolarBox(obj); // The PolarBox that might collide with "boxA".
 
-            Recto rectP = new Recto(posP, size.y);
-            Recto rectB = GetRecto(obj);
-
-            if (HitZ(z, size.z, obj) && rectP.DoesItHit(rectB))
+            if (HitZ(positionZ, size.z, obj) && boxA.DoesItHit(boxB))
             {
-                float radius = rectB.hsize.r + rectP.hsize.r; // Gets the distance the player should be from the center of the box
-                return new Polar(rotB * Mathf.Deg2Rad, rectB.position.r - radius);
+                float radius = boxB.halfsize.r + boxA.halfsize.r; // Gets the distance the player should be from the center of the box
+                return new Polar(boxBRotation * Mathf.Deg2Rad, boxB.position.r - radius);
             }
         }
-        return posP.ToRad();
+        return position.ToRad();
     }
 
-    static public float ContactPointForward(Polar posP, float z, Vector3 size)
+    /// <summary>
+    /// The corrected polar coordinates place right behind whatever block it hits inside hitMe.
+    /// </summary>
+    /// <param name="position">The Polar position to place the object.</param>
+    /// <param name="positionZ">The z position to place the object.</param>
+    /// <param name="size">The size to assume of the object.</param>
+    /// <returns>Returns the polar coordinates of where to place the object so it's outside of the collided object.</returns>
+    static public float ContactPointForward(Polar position, float positionZ, Vector3 size)
     {
+        PolarBox boxA = new PolarBox(position, size.y); // The PolarBox to check collision against.
         foreach (GameObject obj in hitMe)
         {
-            float rotB = obj.transform.eulerAngles.z;
-            Polar posP2 = posP;
-            posP2.r -= .1f;
-            Recto rectP = new Recto(posP2, size.y);
-            Recto rectB = GetRecto(obj);
+            Polar position2 = position;
+            position2.r -= .1f;
+            PolarBox boxB = GetPolarBox(obj); // The PolarBox that might collide with "boxA".
 
-            if (HitZ(z + .1f, size.z, obj, true) && rectP.DoesItHitF(rectB))
+            if (HitZ(positionZ + .1f, size.z, obj, true) && boxA.DoesItHitForward(boxB))
             {
                 float forward = obj.transform.localScale.z / 2 + size.z / 2;
                 return obj.transform.position.z - forward;
             }
         }
-        return z;
+        return positionZ;
     }
 
-    static private Recto GetRecto(GameObject obj)
+    /// <summary>
+    /// Converts a GameObject to a PolarBox.
+    /// </summary>
+    /// <param name="obj">The GameObject to convert.</param>
+    /// <returns>Returns the new PolarBox.</returns>
+    static private PolarBox GetPolarBox(GameObject obj)
     {
         float x = obj.transform.position.x;
         float y = obj.transform.position.y;
         float r = Mathf.Sqrt(x * x + y * y);
-        return new Recto(new Polar(obj.transform.rotation.eulerAngles.z, r), obj.transform.localScale.y);
+        return new PolarBox(new Polar(obj.transform.rotation.eulerAngles.z, r), obj.transform.localScale.y);
     }
 
-    static private bool HitZ(float pz, float pl, GameObject b, bool forward = false)
+    /// <summary>
+    /// Checks collision between two objects on the z axis only.
+    /// </summary>
+    /// <param name="firstZ">The z to place the first object.</param>
+    /// <param name="firstLength">The length to assume of the first object.</param>
+    /// <param name="secondObject">The second object as a GameObject.</param>
+    /// <param name="isForward">Whether or not to check collision in front of the first object.</param>
+    /// <returns>Returns whether or not the objects have collided on the z axis.</returns>
+    static private bool HitZ(float firstZ, float firstLength, GameObject secondObject, bool isForward = false)
     {
-        float phalf = pl / 2;
-        float bhalf = b.transform.localScale.z / 2;
-        float pMax = pz + phalf;
-        float pMin = pz - phalf;
-        float bMax = b.transform.position.z + bhalf;
-        float bMin = b.transform.position.z - bhalf;
+        float firstHalfLength = firstLength / 2; // Half length of the first object.
+        float secondHalfLength = secondObject.transform.localScale.z / 2; // Half length of the second object.
+        float firstMax = firstZ + firstHalfLength; // Maximum z of the first object.
+        float firstMin = firstZ - firstHalfLength; // Minimum z of the second object.
+        float secondMax = secondObject.transform.position.z + secondHalfLength; // Maximum z of the second object.
+        float secondMin = secondObject.transform.position.z - secondHalfLength; // Minimum z of the second object.
 
-        if (forward)
-            return pMax >= bMin && bMax > pMin;
+        if (isForward)
+            return firstMax >= secondMin && secondMax > firstMin;
         else
-            return pMax > bMin && pMin < bMax;
+            return firstMax > secondMin && firstMin < secondMax;
     }
 }
 
-public class Recto
+/// <summary>
+/// It's a class that's sort of like a bent rectangle. It behaves similar to AABB logic, as in, it's for collision detection, except on a polar coordinate plane.
+/// </summary>
+public class PolarBox
 {
+    /// <summary>
+    /// The polar coordinates to place this box at.
+    /// </summary>
     public Polar position;
-    public Polar hsize;
+    /// <summary>
+    /// The polar half size of the box. Half the radius thatr it takes up, half the degrees that it takes up.
+    /// </summary>
+    public Polar halfsize;
+    /// <summary>
+    /// The polar coordinates of the smallest possible values that a collision can be at.
+    /// </summary>
     public Polar min;
+    /// <summary>
+    /// The polar coordinates of the largest possible values that a collision can be at.
+    /// </summary>
     public Polar max;
 
-    public Recto(Polar _position, float height)
+    /// <summary>
+    /// Creates a new PolarBox!
+    /// </summary>
+    /// <param name="_position">The position to assign this box.</param>
+    /// <param name="height">The radius/height that the box should take up.</param>
+    public PolarBox(Polar _position, float height)
     {
         position = _position;
-        hsize = new Polar(Mathf.PI / MakeLevel.sides, height / 2);
-        min = new Polar(position.a - hsize.a, position.r - hsize.r);
-        max = new Polar(position.a + hsize.a, position.r + hsize.r);
+        halfsize = new Polar(Mathf.PI / MakeLevel.sides, height / 2);
+        min = new Polar(position.a - halfsize.a, position.r - halfsize.r);
+        max = new Polar(position.a + halfsize.a, position.r + halfsize.r);
     }
 
-    public bool DoesItHit(Recto other)
+    /// <summary>
+    /// Checks if this PolarBox collides with another PolarBox.
+    /// </summary>
+    /// <param name="other">The other PolarBox to check collision with.</param>
+    /// <returns>Returns whether there was a collision between the two boxes.</returns>
+    public bool DoesItHit(PolarBox other)
     {
         float difference = Utils.AngleDifference(position.a, other.position.a);
-        float slice = 360 / MakeLevel.sides / 3;
+        float slice = 360 / MakeLevel.sides / 3; // The minimum distance angle that the objects have to be from each other to collide.
         return difference < slice && max.r > other.min.r && min.r < other.max.r;
     }
 
-    public bool DoesItHitF(Recto other)
+    /// <summary>
+    /// Checks if this PolarBox collides with another PolarBox in front of it.
+    /// </summary>
+    /// <param name="other">The other PolarBox to check collision with.</param>
+    /// <returns>Returns whether there was a collision between the two boxes.</returns>
+    public bool DoesItHitForward(PolarBox other)
     {
         float difference = Utils.AngleDifference(position.a, other.position.a);
-        float slice = 360 / MakeLevel.sides / 4;
+        float slice = 360 / MakeLevel.sides / 4; // The minimum distance angle that the objects have to be from each other to collide.
         return difference < slice && max.r > other.min.r && min.r < other.max.r;
     }
 }
