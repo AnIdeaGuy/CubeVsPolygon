@@ -21,8 +21,8 @@ public class PlayahMove : MonoBehaviour
     private int sidestepDir = 0;
     private int ssdBuffer = 0;
     private const float STEP_SPEED = 6.0f;
-    public const float JUMP_STRENGTH = 17.0f;
-    private const float GRAVITY = 40.0f;
+    public const float JUMP_STRENGTH = 24.0f;
+    private const float GRAVITY = 100.0f;
     private const float posMultiple = .05f;
     private const float goalZ = -5.0f;
     private const float goalSpeed = 2.0f;

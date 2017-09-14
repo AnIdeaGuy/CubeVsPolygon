@@ -12,7 +12,7 @@ public class MakeLevel : MonoBehaviour
     public GameObject spike;
     public GameObject ground;
 
-    static public int sides = 10;
+    static public int sides = 12;
     public const int DEPTH = 3;
     static public Vector3 blockSize = new Vector3(2.0f, 1.0f, 1.0f);
     public const float START_Z = 12.0f;
@@ -28,10 +28,16 @@ public class MakeLevel : MonoBehaviour
     static public float awakeZ = -3.0f;
     static public float superRadius = 0;
     private LevelChunk currentChunk;
+    private bool first = true;
 
     private List<LevelChunk> allChunks = new List<LevelChunk>();
 
     void Start()
+    {
+        
+    }
+
+    void Init()
     {
         LoadAllChunks();
         MakeRandomChunk();
@@ -39,6 +45,11 @@ public class MakeLevel : MonoBehaviour
 
     void Update()
     {
+        if (first)
+        {
+            Init();
+            first = false;
+        }
         float changeInZ = speed * Time.deltaTime;
         progress += changeInZ;
         progressSinceLast += changeInZ;

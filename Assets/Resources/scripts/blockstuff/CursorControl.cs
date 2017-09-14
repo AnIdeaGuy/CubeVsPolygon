@@ -48,7 +48,7 @@ public class CursorControl : MonoBehaviour
                 if (!verthit)
                 {
                     Vector3 pos = transform.position;
-                    pos.z -= MakeLevel.blockSize.z;
+                    pos.z += MakeLevel.blockSize.z;
                     transform.position = pos;
                 }
                 verthit = true;
@@ -59,7 +59,7 @@ public class CursorControl : MonoBehaviour
                 if (!verthit)
                 {
                     Vector3 pos = transform.position;
-                    pos.z += MakeLevel.blockSize.z;
+                    pos.z -= MakeLevel.blockSize.z;
                     transform.position = pos;
                 }
                 verthit = true;
@@ -70,7 +70,7 @@ public class CursorControl : MonoBehaviour
                 if (!horhit)
                 {
                     Vector3 pos = transform.position;
-                    pos.x -= MakeLevel.blockSize.x;
+                    pos.x += MakeLevel.blockSize.x;
                     transform.position = pos;
                 }
                 horhit = true;
@@ -81,7 +81,7 @@ public class CursorControl : MonoBehaviour
                 if (!horhit)
                 {
                     Vector3 pos = transform.position;
-                    pos.x += MakeLevel.blockSize.x;
+                    pos.x -= MakeLevel.blockSize.x;
                     transform.position = pos;
                 }
                 horhit = true;

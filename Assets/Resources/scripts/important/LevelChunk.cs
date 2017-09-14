@@ -37,14 +37,12 @@ public class LevelChunk
     {
         List<Block[,]> map2 = new List<Block[,]>();
         List<Block[,]> map3 = new List<Block[,]>();
+
         for (int z = 0; z < length; z++)
         {
             map2.Add(new Block[MakeLevel.sides, MakeLevel.DEPTH]);
             map3.Add(new Block[MakeLevel.sides, MakeLevel.DEPTH]);
-        }
 
-        for (int z = 0; z < length; z++)
-        {
             for (int x = 0; x < sidesMinimum; x++)
                 for (int y = 0; y < MakeLevel.DEPTH; y++)
                 {
@@ -72,10 +70,7 @@ public class LevelChunk
         for (int z = 0; z < length; z++)
             for (int x = 0; x < MakeLevel.sides; x++)
                 for (int y = 0; y < MakeLevel.DEPTH; y++)
-                {
-                   
                     map[z][x, y] = map3[z][(x + offset) % MakeLevel.sides, y];
-                }
     }
 
     public Block[,] GetNextRow()
