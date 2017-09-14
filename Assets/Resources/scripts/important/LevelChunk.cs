@@ -91,9 +91,13 @@ public class LevelChunk
             map.Add(new Block[sidesMinimum, MakeLevel.DEPTH]);
 
         for (int x = 0; x < sidesMinimum; x++)
-            for (int y = 0; y < MakeLevel.DEPTH; y++)
+            for (int y = 0; y < _map[0].Count; y++)
+            {
                 for (int z = 0; z < length; z++)
                     map[z][x, y] = _map[x][y][z];
+                for (int z = _map[0].Count; z < MakeLevel.DEPTH; z++)
+                    map[z][x, y] = Block.AIR;
+            }
     }
 
     public LevelChunk Clone()
@@ -114,13 +118,6 @@ public class LevelChunk
                     map[z][x, y] = Block.AIR;
             }
         }
-    }
-
-    public void GenerateRandomMap(/*Block[,] lastRow*/)
-    {
-        RoughDraftGen();
-
-        // TODO: Making it fair
     }
 
     public void GenerateHurdleMap()

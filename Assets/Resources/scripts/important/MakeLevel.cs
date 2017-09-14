@@ -96,7 +96,7 @@ public class MakeLevel : MonoBehaviour
 
     private void MakeRandomChunk()
     {
-        currentChunk = allChunks[(int)Mathf.Round(Random.Range(0, allChunks.Count-1))].Clone();
+        currentChunk = allChunks[(int) Mathf.Floor(Random.Range(0, allChunks.Count-.1f))].Clone();
         currentChunk.Init();
     }
 
@@ -121,6 +121,7 @@ public class MakeLevel : MonoBehaviour
     public void LoadAllChunks()
     {
         LoadThis("furst");
+        LoadThis("secund");
     }
 
     public void LoadThis(string name)
