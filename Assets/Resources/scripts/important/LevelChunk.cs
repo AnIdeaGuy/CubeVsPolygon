@@ -37,6 +37,8 @@ public class LevelChunk
     {
         List<Block[,]> map2 = new List<Block[,]>();
         List<Block[,]> map3 = new List<Block[,]>();
+        if (sidesMinimum > MakeLevel.sides)
+            sidesMinimum = MakeLevel.sides;
 
         for (int z = 0; z < length; z++)
         {
@@ -49,7 +51,7 @@ public class LevelChunk
                     map2[z][x, y] = map[z][x, y];
                     map3[z][x, y] = map[z][x, y];
                 }
-            for (int x = sidesMinimum - 1; x < MakeLevel.sides; x++)
+            for (int x = sidesMinimum; x < MakeLevel.sides; x++)
             {
                 map2[z][x, 0] = Block.GROUND;
                 map3[z][x, 0] = Block.GROUND;

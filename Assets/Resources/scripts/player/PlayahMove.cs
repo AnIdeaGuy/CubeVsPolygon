@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class PlayahMove : MonoBehaviour
 {
-
-    public bool gravOn = false;
     public GameObject cubo;
 
     /// <summary>
@@ -57,11 +55,8 @@ public class PlayahMove : MonoBehaviour
         else
             CuboDance();
 
-        if (gravOn)
-        {
-            loc.r += (-upVelocity + gacc) * Time.deltaTime;
-            Collision();
-        }
+        loc.r += (-upVelocity + gacc) * Time.deltaTime;
+        Collision();
 
         if (locZ < MakeLevel.pKillZ)
         {
@@ -74,12 +69,10 @@ public class PlayahMove : MonoBehaviour
 
     private void TheInput()
     {
-        if (Input.GetAxis("Vertical") > 0)
-            gravOn = true;
 
         if (Input.GetButtonDown("Jump"))
         {
-            if (hitD && gravOn)
+            if (hitD)
             {
                 upVelocity = JUMP_STRENGTH;
             }
