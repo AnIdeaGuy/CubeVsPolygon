@@ -122,6 +122,8 @@ public class MakeLevel : MonoBehaviour
     {
         LoadThis("furst");
         LoadThis("secund");
+        LoadThis("thurd");
+        LoadThis("furth");
     }
 
     public void LoadThis(string name)

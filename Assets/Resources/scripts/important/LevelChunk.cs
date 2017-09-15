@@ -91,13 +91,15 @@ public class LevelChunk
             map.Add(new Block[sidesMinimum, MakeLevel.DEPTH]);
 
         for (int x = 0; x < sidesMinimum; x++)
+        {
             for (int y = 0; y < _map[0].Count; y++)
-            {
                 for (int z = 0; z < length; z++)
                     map[z][x, y] = _map[x][y][z];
-                for (int z = _map[0].Count; z < MakeLevel.DEPTH; z++)
+            for (int y = _map[0].Count; y < MakeLevel.DEPTH; y++)
+                for (int z = 0; z < length; z++)
                     map[z][x, y] = Block.AIR;
-            }
+        }
+
     }
 
     public LevelChunk Clone()
