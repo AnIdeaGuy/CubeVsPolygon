@@ -29,6 +29,10 @@ public class PlayahMove : MonoBehaviour
     /// </summary>
     private bool isGrounded = false;
     /// <summary>
+    /// Whether the player is still living.
+    /// </summary>
+    static public bool alive = true;
+    /// <summary>
     /// The force at which the player move upward.
     /// </summary>
     private float upVelocity = 0;
@@ -87,32 +91,51 @@ public class PlayahMove : MonoBehaviour
 
     void Update()
     {
-        TheInput();
-
-        float x = transform.position.x;
-        float y = transform.position.y;
-        float r = Mathf.Sqrt(x * x + y * y);
-        float a = transform.rotation.eulerAngles.z * Mathf.Deg2Rad;
-        // Allows for a negative radius
-        if (Utils.AngleDifference(a, Mathf.Atan2(y, x), true) > Mathf.PI / 2)
-            r = -r;
-        location = new Polar(a, r);
-        locationZ = transform.position.z;
-        if (stepDirection != 0)
-            Sidestep();
-        else
-            CuboDance();
-
-        location.r += (-upVelocity + downVelocity) * Time.deltaTime;
-        Collision();
-
-        if (locationZ < MakeLevel.pKillZ)
+        if (!MakeLevel.paused)
         {
-            // TODO: Game Over
-        }
+            if (alive)
+            {
+                MakeLevel.resetThisFrame = false;
+                TheInput();
 
-        transform.position = new Vector3(Mathf.Cos(location.a) * location.r, Mathf.Sin(location.a) * location.r, locationZ);
-        transform.rotation = Quaternion.Euler(0, 0, location.a * Mathf.Rad2Deg);
+                float x = transform.position.x;
+                float y = transform.position.y;
+                float r = Mathf.Sqrt(x * x + y * y);
+                float a = transform.rotation.eulerAngles.z * Mathf.Deg2Rad;
+                // Allows for a negative radius
+                if (Utils.AngleDifference(a, Mathf.Atan2(y, x), true) > Mathf.PI / 2)
+                    r = -r;
+                location = new Polar(a, r);
+                locationZ = transform.position.z;
+                if (stepDirection != 0)
+                    Sidestep();
+                else
+                    CuboDance();
+
+                location.r += (-upVelocity + downVelocity) * Time.deltaTime;
+
+                if (location.r > MakeLevel.killRadius)
+                    alive = false;
+                Collision();
+
+                if (locationZ < MakeLevel.pKillZ)
+                    alive = false;
+
+                transform.position = new Vector3(Mathf.Cos(location.a) * location.r, Mathf.Sin(location.a) * location.r, locationZ);
+                transform.rotation = Quaternion.Euler(0, 0, location.a * Mathf.Rad2Deg);
+            }
+            else
+            {
+                cubo.SetActive(false);
+                if (Input.GetButtonDown("Start"))
+                {
+                    MakeLevel.ResetLevel();
+                    alive = true;
+                    DoReset();
+                    cubo.SetActive(true);
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -264,12 +287,12 @@ public class PlayahMove : MonoBehaviour
     /// <returns>Returns whether there was a collision.</returns>
     private bool CheckGround()
     {
-        Polar loc2 = location.ToDeg();
-        loc2.r += Time.deltaTime;
+        Polar location2 = location.ToDeg();
+        location2.r += Time.deltaTime;
         Vector3 fakeScale = transform.localScale;
         fakeScale.z /= 4;
-        loc2 = DoCollisions.ContactPointDown(loc2, locationZ, fakeScale);
-        return Utils.RoundSpec(location.r, .1f) != Utils.RoundSpec(loc2.r, .1f);
+        location2 = DoCollisions.ContactPointDown(location2, locationZ, fakeScale);
+        return Utils.RoundSpec(location.r, .1f) != Utils.RoundSpec(location2.r, .1f);
     }
 
     /// <summary>
@@ -314,6 +337,23 @@ public class PlayahMove : MonoBehaviour
         if (isGrounded)
             upVelocity = JUMP_STRENGTH;
         danceProgress = 0;
+    }
+
+    /// <summary>
+    /// Resets the playah.
+    /// </summary>
+    private void DoReset()
+    {
+        stepProgress = 1;
+        stepDirection = 0;
+        upVelocity = 0;
+        downVelocity = 0;
+        transform.position = new Vector3(0, 0, goalZ);
+        transform.rotation = Quaternion.Euler(new Vector3(0, 0, -90));
+        initialStepAngle = -90;
+        location = new Polar(-Mathf.PI / 2, 0);
+        locationZ = goalZ;
+        cubo.transform.localRotation = Quaternion.identity;
     }
 
     /// <summary>

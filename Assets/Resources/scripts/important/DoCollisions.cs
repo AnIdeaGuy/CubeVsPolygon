@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DoCollisions : MonoBehaviour
+public class DoCollisions
 {
     /// <summary>
     /// All the objects that the player can collide with.

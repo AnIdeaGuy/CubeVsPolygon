@@ -43,7 +43,7 @@ public class CursorControl : MonoBehaviour
                 Place(Block.AIR);
             }
 
-            if (Input.GetAxis("Vertical") > 0)
+            if (Input.GetButtonDown("Up"))
             {
                 if (!verthit)
                 {
@@ -54,7 +54,7 @@ public class CursorControl : MonoBehaviour
                 verthit = true;
             }
 
-            if (Input.GetAxis("Vertical") < 0)
+            if (Input.GetButtonDown("Duck"))
             {
                 if (!verthit)
                 {
@@ -65,7 +65,7 @@ public class CursorControl : MonoBehaviour
                 verthit = true;
             }
 
-            if (Input.GetAxis("Horizontal") > 0)
+            if (Input.GetButtonDown("Right"))
             {
                 if (!horhit)
                 {
@@ -76,7 +76,7 @@ public class CursorControl : MonoBehaviour
                 horhit = true;
             }
 
-            if (Input.GetAxis("Horizontal") < 0)
+            if (Input.GetButtonDown("Left"))
             {
                 if (!horhit)
                 {
@@ -87,19 +87,19 @@ public class CursorControl : MonoBehaviour
                 horhit = true;
             }
 
-            if (Input.GetAxis("Horizontal") == 0)
+            if (Input.GetButtonUp("Left") && Input.GetButtonUp("Right"))
                 horhit = false;
-            if (Input.GetAxis("Vertical") == 0)
+            if (Input.GetButtonUp("Jump") && Input.GetButtonUp("Duck"))
                 verthit = false;
 
-            if (Input.GetButtonDown("Jump"))
+            if (Input.GetButtonDown("Start"))
             {
                 Vector3 pos = transform.position;
                 pos.y += MakeLevel.blockSize.y;
                 transform.position = pos;
             }
 
-            if (Input.GetButtonDown("AntiJump"))
+            if (Input.GetButtonDown("Select"))
             {
                 Vector3 pos = transform.position;
                 pos.y -= MakeLevel.blockSize.y;

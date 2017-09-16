@@ -17,6 +17,10 @@ public class MakeLevel : MonoBehaviour
     static public Vector3 blockSize = new Vector3(2.0f, 1.0f, 1.0f);
     public const float START_Z = 12.0f;
     /// <summary>
+    /// Whether or not the game is paused.
+    /// </summary>
+    static public bool paused = false;
+    /// <summary>
     /// The thing that determines the new row of shit to be spawned.
     /// </summary>
     private Block[,] spawnBar = new Block[sides, DEPTH]; // NOTE: x wraps around the pipe, y goes toward the center.
@@ -25,14 +29,26 @@ public class MakeLevel : MonoBehaviour
     static public float speed = 6.0f;
     static public float killZ = -12.0f;
     static public float pKillZ = -10.0f;
+    static public float killRadius;
     static public float awakeZ = -3.0f;
     static public float superRadius = 0;
     private LevelChunk currentChunk;
     private bool first = true;
+    static public MakeLevel level;
+    static public bool resetThisFrame = false;
 
     private List<LevelChunk> allChunks = new List<LevelChunk>();
 
-    void Start()
+    private void Start()
+    {
+        level = this;
+        SpawnBlanks();
+    }
+
+    /// <summary>
+    /// Spawns a plain map to start the level with.
+    /// </summary>
+    void SpawnBlanks()
     {
         currentChunk = new LevelChunk(20);
         for (int i = 0; i < 20; i++)
@@ -55,14 +71,18 @@ public class MakeLevel : MonoBehaviour
             Init();
             first = false;
         }
-        float changeInZ = speed * Time.deltaTime;
-        progress += changeInZ;
-        progressSinceLast += changeInZ;
-        if (progressSinceLast > blockSize.z)
+        if (!paused)
         {
-            progressSinceLast -= blockSize.z;
-            DetermineSpawn();
-            SpawnThem(progressSinceLast);
+            float changeInZ = speed * Time.deltaTime;
+            progress += changeInZ;
+            progressSinceLast += changeInZ;
+            if (progressSinceLast > blockSize.z)
+            {
+                progressSinceLast -= blockSize.z;
+                DetermineSpawn();
+                SpawnThem(progressSinceLast);
+            }
+
         }
     }
 
@@ -82,6 +102,7 @@ public class MakeLevel : MonoBehaviour
         float radius = GetRadius(sides);
         radius = Mathf.Max(radius, GetRadius(10));
         superRadius = radius;
+        killRadius = radius + 4;
         for (int i = 0; i < sides; i++)
             for (int w = 0; w < DEPTH; w++)
             {
@@ -92,6 +113,17 @@ public class MakeLevel : MonoBehaviour
                 if (spawnBar[i, w] != Block.AIR)
                     Instantiate(Block2Obj(spawnBar[i, w]), realPos, realRot);
             }
+    }
+
+    /// <summary>
+    /// Resets the level.
+    /// </summary>
+    static public void ResetLevel()
+    {
+        resetThisFrame = true;
+        DoCollisions.hitMe.Clear();
+        level.SpawnBlanks();
+        resetThisFrame = true;
     }
 
     private void MakeRandomChunk()
