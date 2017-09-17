@@ -15,7 +15,7 @@ public class MakeLevel : MonoBehaviour
     static public int sides = 12;
     public const int DEPTH = 3;
     static public Vector3 blockSize = new Vector3(2.0f, 1.0f, 1.0f);
-    public const float START_Z = 12.0f;
+    public const float START_Z = 20.0f;
     /// <summary>
     /// Whether or not the game is paused.
     /// </summary>
@@ -50,8 +50,8 @@ public class MakeLevel : MonoBehaviour
     /// </summary>
     void SpawnBlanks()
     {
-        currentChunk = new LevelChunk(20);
-        for (int i = 0; i < 20; i++)
+        currentChunk = new LevelChunk(30);
+        for (int i = 0; i < 30; i++)
         {
             spawnBar = currentChunk.GetNextRow();
             SpawnThem(i);

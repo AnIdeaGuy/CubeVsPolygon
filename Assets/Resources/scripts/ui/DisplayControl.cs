@@ -29,13 +29,13 @@ public class DisplayControl : MonoBehaviour
                 message = "fuck you";
                 break;
             case 3:
-                message = "try next time";
+                message = "actually try, k?";
                 break;
             case 4:
                 message = "no one loves you";
                 break;
             case 5:
-                message = "this is easy";
+                message = "your face is bad";
                 break;
             case 6:
                 message = "loser";

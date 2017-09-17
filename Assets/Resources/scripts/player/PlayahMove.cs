@@ -112,8 +112,6 @@ public class PlayahMove : MonoBehaviour
                 else
                     CuboDance();
 
-                location.r += (-upVelocity + downVelocity) * Time.deltaTime;
-
                 if (location.r > MakeLevel.killRadius)
                     alive = false;
                 Collision();
@@ -237,24 +235,39 @@ public class PlayahMove : MonoBehaviour
     /// </summary>
     private void Collision()
     {
-        Polar location2 = location.ToDeg();
-        location2.r += Time.deltaTime;
-        Block whatWasHit = DoCollisions.WhatBlockDidItHit(location2, locationZ + .1f, transform.localScale);
+        Polar locationNew = location.ToDeg();
+        locationNew.r += GetVerticalMovement();
+        Block whatWasHit = DoCollisions.WhatBlockDidItHit(locationNew, locationZ + .1f, transform.localScale);
+
         switch (whatWasHit)
         {
             case Block.GROUND:
                 if (!isGrounded)
                 {
-                    isGrounded = true;
-                    upVelocity = 0;
-                    downVelocity = 0;
+                    if (SnapToGround(false))
+                    {
+                        isGrounded = true;
+                        upVelocity = 0;
+                        downVelocity = 0;
+                    }
+                    else
+                    {
+                        DoGravity();
+                        location = locationNew.ToRad();
+                    }
                 }
-                SnapToGround();
                 SnapToWall();
+                SnapToGround();
+                if (GetVerticalMovement() < 0)
+                    location = locationNew.ToRad();
+                break;
+
+            case Block.SPIKE:
                 break;
             default:
                 isGrounded = false;
                 DoGravity();
+                location = locationNew.ToRad();
                 break;
         }
 
@@ -281,18 +294,10 @@ public class PlayahMove : MonoBehaviour
         downVelocity += GRAVITY * Time.deltaTime;
     }
 
-    /// <summary>
-    /// Checks to see if there's a ground collision.
-    /// </summary>
-    /// <returns>Returns whether there was a collision.</returns>
-    private bool CheckGround()
+    private float GetVerticalMovement()
     {
-        Polar location2 = location.ToDeg();
-        location2.r += Time.deltaTime;
-        Vector3 fakeScale = transform.localScale;
-        fakeScale.z /= 4;
-        location2 = DoCollisions.ContactPointDown(location2, locationZ, fakeScale);
-        return Utils.RoundSpec(location.r, .1f) != Utils.RoundSpec(location2.r, .1f);
+        float changeInRadius = (-upVelocity + downVelocity) * Time.deltaTime;
+        return changeInRadius != 0 ? changeInRadius : .1f;
     }
 
     /// <summary>
@@ -303,9 +308,12 @@ public class PlayahMove : MonoBehaviour
     private bool SnapToGround(bool changeRadius = true)
     {
         Polar location2 = location.ToDeg();
-        location2.r += Time.deltaTime;
-        location2 = DoCollisions.ContactPointDown(location2, locationZ, transform.localScale);
-        if (location.r == location2.r)
+        location2.r += GetVerticalMovement();
+        float oldRadius = location2.r;
+        Vector3 fakeScale = transform.localScale;
+        fakeScale.z /= 4;
+        location2 = DoCollisions.ContactPointDown(location2, locationZ, fakeScale);
+        if (oldRadius == location2.r)
             return false;
         if (changeRadius)
             location = location2;
@@ -316,7 +324,7 @@ public class PlayahMove : MonoBehaviour
     /// Snaps the playah forward to the wall.
     /// </summary>
     /// <param name="changeZ">Whether yo actually change the z of the playah.</param>
-    /// <returns></returns>
+    /// <returns>Returns true if the old Z doesn't match the new Z.</returns>
     private bool SnapToWall(bool changeZ = true)
     {
         float tempZ = DoCollisions.ContactPointForward(location.ToDeg(), locationZ, transform.localScale);
