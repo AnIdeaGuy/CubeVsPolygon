@@ -26,7 +26,7 @@ public class MakeLevel : MonoBehaviour
     private Block[,] spawnBar = new Block[sides, DEPTH]; // NOTE: x wraps around the pipe, y goes toward the center.
     private float progress = 0.0f;
     private float progressSinceLast = 0.0f;
-    static public float speed = 6.0f;
+    static public float speed = 8.0f;
     static public float killZ = -12.0f;
     static public float pKillZ = -10.0f;
     static public float killRadius;
@@ -50,8 +50,8 @@ public class MakeLevel : MonoBehaviour
     /// </summary>
     void SpawnBlanks()
     {
-        currentChunk = new LevelChunk(30);
-        for (int i = 0; i < 30; i++)
+        currentChunk = new LevelChunk(25);
+        for (int i = 0; i < 25; i++)
         {
             spawnBar = currentChunk.GetNextRow();
             SpawnThem(i);

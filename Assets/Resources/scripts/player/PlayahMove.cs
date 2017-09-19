@@ -81,12 +81,35 @@ public class PlayahMove : MonoBehaviour
     /// The rate at which "danceProgress"... well... progresses.
     /// </summary>
     private float danceRate = .4f;
+    /// <summary>
+    /// What do you think? It's for ducking. Figure it out. It's pretty obvious.
+    /// </summary>
+    public bool isDucking = false;
+
+    /// <summary>
+    /// The amount of hitpoints the playah has.
+    /// </summary>
+    static public float hp;
+    /// <summary>
+    /// The maximum amount "hp" is allowed to be.
+    /// </summary>
+    public const float HP_MAX = 4;
+    /// <summary>
+    /// Keeps track of how long the playah is invincible.
+    /// </summary>
+    public float invFrames = 0;
+    /// <summary>
+    /// How long the player can be invincible.
+    /// </summary>
+    public const float INV_MAX = 1;
 
     void Start()
     {
         Vector3 rotation = transform.rotation.eulerAngles;
         rotation.z = -90;
         transform.rotation = Quaternion.Euler(rotation);
+        hp = HP_MAX;
+        invFrames = INV_MAX;
     }
 
     void Update()
@@ -110,7 +133,21 @@ public class PlayahMove : MonoBehaviour
                 if (stepDirection != 0)
                     Sidestep();
                 else
+                {
                     CuboDance();
+                    if (isDucking)
+                        DoDucking();
+                    else
+                        DoUnducking();
+                }
+
+                if (invFrames < INV_MAX)
+                {
+                    cubo.GetComponent<Renderer>().enabled = !cubo.GetComponent<Renderer>().enabled;
+                    invFrames += Time.deltaTime;
+                }
+                else
+                    invFrames = INV_MAX;
 
                 if (location.r > MakeLevel.killRadius)
                     alive = false;
@@ -125,6 +162,8 @@ public class PlayahMove : MonoBehaviour
             else
             {
                 cubo.SetActive(false);
+                hp = 0;
+                DisplayControl.displayControl.RestartHealth();
                 if (Input.GetButtonDown("Start"))
                 {
                     MakeLevel.ResetLevel();
@@ -141,6 +180,7 @@ public class PlayahMove : MonoBehaviour
     /// </summary>
     private void TheInput()
     {
+        isDucking = Input.GetButton("Duck");
 
         if (Input.GetButtonDown("Jump"))
         {
@@ -242,6 +282,10 @@ public class PlayahMove : MonoBehaviour
         switch (whatWasHit)
         {
             case Block.GROUND:
+                SnapToGround();
+                SnapToWall();
+                if (GetVerticalMovement() < 0)
+                    location = locationNew.ToRad();
                 if (!isGrounded)
                 {
                     if (SnapToGround(false))
@@ -256,13 +300,12 @@ public class PlayahMove : MonoBehaviour
                         location = locationNew.ToRad();
                     }
                 }
-                SnapToWall();
-                SnapToGround();
-                if (GetVerticalMovement() < 0)
-                    location = locationNew.ToRad();
                 break;
 
             case Block.SPIKE:
+                ReduceHP(1);
+                DoGravity();
+                location = locationNew.ToRad();
                 break;
             default:
                 isGrounded = false;
@@ -273,6 +316,27 @@ public class PlayahMove : MonoBehaviour
 
         if (!SnapToWall(false))
             MoveToGoalZ();
+    }
+
+    /// <summary>
+    /// Do the thing with the ducking and such.
+    /// </summary>
+    private void DoDucking()
+    {
+        Vector3 tempScale = cubo.transform.localScale;
+        Vector3 tempPosition = cubo.transform.localPosition;
+        tempScale.x = .5f;
+        tempPosition.x = .5f;
+
+        cubo.transform.localScale = tempScale;
+        cubo.transform.localPosition = tempPosition;
+    }
+
+    private void DoUnducking()
+    {
+        Vector3 tempPosition = cubo.transform.localPosition;
+        tempPosition.x = 0;
+        cubo.transform.localPosition = tempPosition;
     }
 
     /// <summary>
@@ -294,6 +358,23 @@ public class PlayahMove : MonoBehaviour
         downVelocity += GRAVITY * Time.deltaTime;
     }
 
+    private void ReduceHP(float amount)
+    {
+        if (invFrames == INV_MAX)
+        {
+            hp -= amount;
+            if (hp <= 0)
+                alive = false;
+            else
+                invFrames = 0;
+            DisplayControl.displayControl.StartDamageAnimation();
+        }
+    }
+
+    /// <summary>
+    /// Gets the combination of UpVelocity and DownVelocity.
+    /// </summary>
+    /// <returns>What I just said.</returns>
     private float GetVerticalMovement()
     {
         float changeInRadius = (-upVelocity + downVelocity) * Time.deltaTime;
@@ -311,7 +392,7 @@ public class PlayahMove : MonoBehaviour
         location2.r += GetVerticalMovement();
         float oldRadius = location2.r;
         Vector3 fakeScale = transform.localScale;
-        fakeScale.z /= 4;
+        fakeScale.z *= .5f;
         location2 = DoCollisions.ContactPointDown(location2, locationZ, fakeScale);
         if (oldRadius == location2.r)
             return false;
@@ -327,7 +408,10 @@ public class PlayahMove : MonoBehaviour
     /// <returns>Returns true if the old Z doesn't match the new Z.</returns>
     private bool SnapToWall(bool changeZ = true)
     {
-        float tempZ = DoCollisions.ContactPointForward(location.ToDeg(), locationZ, transform.localScale);
+        Vector3 fakeScale = transform.localScale;
+        fakeScale.y *= .5f;
+        fakeScale.x *= .5f;
+        float tempZ = DoCollisions.ContactPointForward(location.ToDeg(), locationZ, fakeScale);
         if (tempZ == locationZ)
             return false;
         if (changeZ)
@@ -354,6 +438,7 @@ public class PlayahMove : MonoBehaviour
     {
         stepProgress = 1;
         stepDirection = 0;
+        stepDirectionBuffer = 0;
         upVelocity = 0;
         downVelocity = 0;
         transform.position = new Vector3(0, 0, goalZ);
@@ -362,6 +447,10 @@ public class PlayahMove : MonoBehaviour
         location = new Polar(-Mathf.PI / 2, 0);
         locationZ = goalZ;
         cubo.transform.localRotation = Quaternion.identity;
+        hp = HP_MAX;
+        DisplayControl.displayControl.GameStart();
+        invFrames = INV_MAX;
+        cubo.GetComponent<Renderer>().enabled = true;
     }
 
     /// <summary>

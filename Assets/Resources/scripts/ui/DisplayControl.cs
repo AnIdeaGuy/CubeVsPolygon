@@ -8,9 +8,26 @@ using UnityEngine;
 public class DisplayControl : MonoBehaviour
 {
     public GameObject gameOverFont;
+    public GameObject healthIcon;
     public Transform canvas;
     private TextAnimation gameOver = null;
+    public ImageAnimation healthbar= null;
     private bool firstRun = true;
+    static public DisplayControl displayControl;
+    private bool damaging = false;
+    private RectTransform canvasRect;
+        
+    public void GameStart()
+    {
+        RestartHealth();
+    }
+
+    public void RestartHealth()
+    {
+        if (healthbar != null)
+            healthbar.KillTheImages();
+        healthbar = new HealthBarAnimation(healthIcon, (int) Mathf.Floor(PlayahMove.hp), new Vector2(0, - canvasRect.sizeDelta.y / 2 + 40), canvas);
+    }
 
     private void GameOverStart()
     {
@@ -47,14 +64,39 @@ public class DisplayControl : MonoBehaviour
         gameOver = new GameOverAnimation(message, Vector2.zero, gameOverFont, canvas);
     }
 
+    public void StartDamageAnimation()
+    {
+        healthbar.KillTheImages();
+        healthbar = new HealthDamageAnimation(healthIcon, (int) Mathf.Floor(PlayahMove.hp), new Vector2(0, -canvasRect.sizeDelta.y / 2 + 40), canvas);
+        damaging = true;
+    }
+
+    void Start()
+    {
+        displayControl = this;
+        canvasRect = canvas.gameObject.GetComponent<RectTransform>();
+    }
+
     void Update()
     {
+        if (firstRun)
+        {
+            GameStart();
+            firstRun = false;
+        }
         if (PlayahMove.alive)
         {
             if (gameOver != null)
             {
                 gameOver.KillTheChars();
                 gameOver = null;
+            }
+
+            if (healthbar != null)
+            {
+                if (damaging && healthbar.time > .5f)
+                    RestartHealth();
+                healthbar.Update();
             }
         }
         else
