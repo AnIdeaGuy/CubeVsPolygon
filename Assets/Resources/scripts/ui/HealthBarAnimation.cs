@@ -9,7 +9,7 @@ public class HealthBarAnimation : ImageAnimation {
 
     public override void Animation(ImageIcon icon)
     {
-        float y = Mathf.Sin(time * 2 + icon.index * .1f);
+        float y = Mathf.Sin(time * 4 + icon.index * .4f) * 6;
         icon.SetPosition(0, y);
     }
 }

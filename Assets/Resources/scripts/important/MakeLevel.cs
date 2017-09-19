@@ -5,12 +5,14 @@ using UnityEngine;
 /// <summary>
 /// The possible blocks that can be spawned.
 /// </summary>
-public enum Block { AIR, GROUND, SPIKE };
+public enum Block { AIR, GROUND, SPIKE, HALF, POWERUP };
 
 public class MakeLevel : MonoBehaviour
 {
     public GameObject spike;
     public GameObject ground;
+    public GameObject powerup;
+    public GameObject half;
 
     static public int sides = 12;
     public const int DEPTH = 3;
@@ -140,6 +142,10 @@ public class MakeLevel : MonoBehaviour
                 return ground;
             case Block.SPIKE:
                 return spike;
+            case Block.POWERUP:
+                return powerup;
+            case Block.HALF:
+                return half;
             default:
                 return null;
         }
@@ -156,6 +162,7 @@ public class MakeLevel : MonoBehaviour
         LoadThis("secund");
         LoadThis("thurd");
         LoadThis("furth");
+        LoadThis("suxth");
     }
 
     public void LoadThis(string name)

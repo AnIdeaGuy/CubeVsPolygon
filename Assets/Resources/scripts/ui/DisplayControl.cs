@@ -16,6 +16,7 @@ public class DisplayControl : MonoBehaviour
     static public DisplayControl displayControl;
     private bool damaging = false;
     private RectTransform canvasRect;
+    private bool firstFrame = true;
         
     public void GameStart()
     {
@@ -26,6 +27,7 @@ public class DisplayControl : MonoBehaviour
     {
         if (healthbar != null)
             healthbar.KillTheImages();
+        damaging = false;
         healthbar = new HealthBarAnimation(healthIcon, (int) Mathf.Floor(PlayahMove.hp), new Vector2(0, - canvasRect.sizeDelta.y / 2 + 40), canvas);
     }
 
@@ -79,10 +81,10 @@ public class DisplayControl : MonoBehaviour
 
     void Update()
     {
-        if (firstRun)
+        if (firstFrame)
         {
             GameStart();
-            firstRun = false;
+            firstFrame = false;
         }
         if (PlayahMove.alive)
         {

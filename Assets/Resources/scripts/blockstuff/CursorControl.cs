@@ -8,7 +8,8 @@ public class CursorControl : MonoBehaviour
     private bool verthit = false;
     public GameObject ground;
     public GameObject spikes;
-    public GameObject two;
+    public GameObject half;
+    public GameObject powerup;
     public GameObject delete;
 
 	// Use this for initialization
@@ -35,7 +36,12 @@ public class CursorControl : MonoBehaviour
 
             if (Input.GetKeyDown("2"))
             {
-                //Place(two);
+                Place(Block.HALF);
+            }
+
+            if (Input.GetKeyDown("3"))
+            {
+                Place(Block.POWERUP);
             }
 
             if (Input.GetKeyDown("delete"))
@@ -51,7 +57,6 @@ public class CursorControl : MonoBehaviour
                     pos.z += MakeLevel.blockSize.z;
                     transform.position = pos;
                 }
-                verthit = true;
             }
 
             if (Input.GetButtonDown("Duck"))
@@ -62,7 +67,6 @@ public class CursorControl : MonoBehaviour
                     pos.z -= MakeLevel.blockSize.z;
                     transform.position = pos;
                 }
-                verthit = true;
             }
 
             if (Input.GetButtonDown("Right"))
@@ -73,7 +77,6 @@ public class CursorControl : MonoBehaviour
                     pos.x += MakeLevel.blockSize.x;
                     transform.position = pos;
                 }
-                horhit = true;
             }
 
             if (Input.GetButtonDown("Left"))
@@ -84,13 +87,7 @@ public class CursorControl : MonoBehaviour
                     pos.x -= MakeLevel.blockSize.x;
                     transform.position = pos;
                 }
-                horhit = true;
             }
-
-            if (Input.GetButtonUp("Left") && Input.GetButtonUp("Right"))
-                horhit = false;
-            if (Input.GetButtonUp("Jump") && Input.GetButtonUp("Duck"))
-                verthit = false;
 
             if (Input.GetButtonDown("Start"))
             {
@@ -118,6 +115,12 @@ public class CursorControl : MonoBehaviour
                 break;
             case Block.SPIKE:
                 obj = spikes;
+                break;
+            case Block.POWERUP:
+                obj = powerup;
+                break;
+            case Block.HALF:
+                obj = half;
                 break;
             case Block.AIR:
                 obj = delete;

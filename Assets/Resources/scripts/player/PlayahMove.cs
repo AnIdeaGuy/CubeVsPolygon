@@ -277,44 +277,81 @@ public class PlayahMove : MonoBehaviour
     {
         Polar locationNew = location.ToDeg();
         locationNew.r += GetVerticalMovement();
-        Block whatWasHit = DoCollisions.WhatBlockDidItHit(locationNew, locationZ + .1f, transform.localScale);
+        GameObject[] whatWasHit = DoCollisions.WhatBlockDidItHit(locationNew, locationZ + .1f, transform.localScale);
+        bool moveZ = true;
+        bool justFall = true;
 
-        switch (whatWasHit)
+        foreach (GameObject obj in whatWasHit)
         {
-            case Block.GROUND:
-                SnapToGround();
-                SnapToWall();
-                if (GetVerticalMovement() < 0)
-                    location = locationNew.ToRad();
-                if (!isGrounded)
-                {
-                    if (SnapToGround(false))
+            Block block = obj.GetComponent<Blocky>().myType;
+            switch (block)
+            {
+                case Block.GROUND:
+                    bool floorSnap = SnapToGround(obj);
+                    SnapToWall(obj);
+                    if (GetVerticalMovement() < 0)
+                        location = locationNew.ToRad();
+                    if (!isGrounded)
                     {
-                        isGrounded = true;
-                        upVelocity = 0;
-                        downVelocity = 0;
+                        if (floorSnap)
+                        {
+                            isGrounded = true;
+                            upVelocity = 0;
+                            downVelocity = 0;
+                            justFall = false;
+                        }
                     }
                     else
-                    {
-                        DoGravity();
-                        location = locationNew.ToRad();
-                    }
-                }
-                break;
+                        justFall = false;
+                    break;
 
-            case Block.SPIKE:
-                ReduceHP(1);
-                DoGravity();
-                location = locationNew.ToRad();
-                break;
-            default:
-                isGrounded = false;
-                DoGravity();
-                location = locationNew.ToRad();
-                break;
+                case Block.SPIKE:
+                    ReduceHP(1);
+                    break;
+
+                case Block.POWERUP:
+                    if (hp < HP_MAX)
+                        hp = Mathf.Min(hp + 1, HP_MAX);
+                    DisplayControl.displayControl.RestartHealth();
+                    obj.GetComponent<Blocky>().KillMe();
+                    // TODO: Effects and shit
+                    break;
+
+                case Block.HALF:
+                    if (!isDucking)
+                    {
+                        bool floorSnap2 = SnapToGround(obj);
+                        SnapToWall(obj);
+                        if (GetVerticalMovement() < 0)
+                            location = locationNew.ToRad();
+                        if (!isGrounded)
+                        {
+                            if (floorSnap2)
+                            {
+                                isGrounded = true;
+                                upVelocity = 0;
+                                downVelocity = 0;
+                                justFall = false;
+                            }
+                        }
+                        else
+                            justFall = false;
+                    }
+                    break;
+            }
+
+            if (obj != null && SnapToWall(obj, false))
+                moveZ = false;
         }
 
-        if (!SnapToWall(false))
+        if (justFall)
+        {
+            isGrounded = false;
+            DoGravity();
+            location = locationNew.ToRad();
+        }
+
+        if (moveZ)
             MoveToGoalZ();
     }
 
@@ -386,14 +423,14 @@ public class PlayahMove : MonoBehaviour
     /// </summary>
     /// <param name="changeRadius">Whether to actually change the radius of the playah.</param>
     /// <returns>Returns true if the radius is different than the previus radius.</returns>
-    private bool SnapToGround(bool changeRadius = true)
+    private bool SnapToGround(GameObject obj, bool changeRadius = true)
     {
         Polar location2 = location.ToDeg();
         location2.r += GetVerticalMovement();
         float oldRadius = location2.r;
         Vector3 fakeScale = transform.localScale;
         fakeScale.z *= .5f;
-        location2 = DoCollisions.ContactPointDown(location2, locationZ, fakeScale);
+        location2 = DoCollisions.ContactPointDown(location2, locationZ, fakeScale, obj);
         if (oldRadius == location2.r)
             return false;
         if (changeRadius)
@@ -406,12 +443,12 @@ public class PlayahMove : MonoBehaviour
     /// </summary>
     /// <param name="changeZ">Whether yo actually change the z of the playah.</param>
     /// <returns>Returns true if the old Z doesn't match the new Z.</returns>
-    private bool SnapToWall(bool changeZ = true)
+    private bool SnapToWall(GameObject obj, bool changeZ = true)
     {
         Vector3 fakeScale = transform.localScale;
         fakeScale.y *= .5f;
         fakeScale.x *= .5f;
-        float tempZ = DoCollisions.ContactPointForward(location.ToDeg(), locationZ, fakeScale);
+        float tempZ = DoCollisions.ContactPointForward(location.ToDeg(), locationZ, fakeScale, obj);
         if (tempZ == locationZ)
             return false;
         if (changeZ)

@@ -20,17 +20,20 @@ public class Blocky : MonoBehaviour
             /*Destroys the objerct when it's off screen*/
             if (pos.z < MakeLevel.killZ)
             {
-                if (DoCollisions.hitMe.Contains(gameObject))
-                    DoCollisions.hitMe.Remove(gameObject);
-                Destroy(gameObject);
+                KillMe();
             }
         }
 
         if (MakeLevel.resetThisFrame)
         {
-            if (DoCollisions.hitMe.Contains(gameObject))
-                DoCollisions.hitMe.Remove(gameObject);
-            Destroy(gameObject);
+            KillMe();
         }
+    }
+
+    public void KillMe()
+    {
+        if (DoCollisions.hitMe.Contains(gameObject))
+            DoCollisions.hitMe.Remove(gameObject);
+        Destroy(gameObject);
     }
 }

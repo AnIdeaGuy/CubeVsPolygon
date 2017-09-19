@@ -16,8 +16,9 @@ public class DoCollisions
     /// <param name="positionZ">The z position to place the object.</param>
     /// <param name="size">The size to assume of the object.</param>
     /// <returns>Returns the Block type that the object collides with. (Block.AIR if there was no collision)</returns>
-    static public Block WhatBlockDidItHit(Polar position, float positionZ, Vector3 size)
+    static public GameObject[] WhatBlockDidItHit(Polar position, float positionZ, Vector3 size)
     {
+        List<GameObject> blockList = new List<GameObject>();
         PolarBox boxA = new PolarBox(position, size.y); // The PolarBox to check collision against.
         foreach (GameObject obj in hitMe)
         {
@@ -26,9 +27,12 @@ public class DoCollisions
             PolarBox boxB = GetPolarBox(obj); // The PolarBox that might collide with "boxA".
 
             if (HitZ(positionZ, size.z, obj) && boxA.DoesItHit(boxB))
-                return blok;
+                blockList.Add(obj);
         }
-        return Block.AIR;
+        GameObject[] arr = new GameObject[blockList.Count];
+        for (int i = 0; i < blockList.Count; i++)
+            arr[i] = blockList[i];
+        return arr;
     }
 
     /// <summary>
@@ -38,21 +42,20 @@ public class DoCollisions
     /// <param name="positionZ">The z position to place the object.</param>
     /// <param name="size">The size to assume of the object.</param>
     /// <returns>Returns the polar coordinates of where to place the object so it's outside of the collided object.</returns>
-    static public Polar ContactPointDown(Polar position, float positionZ, Vector3 size)
+    static public Polar ContactPointDown(Polar position, float positionZ, Vector3 size, GameObject obj)
     {
         PolarBox boxA = new PolarBox(position, size.y); // The PolarBox to check collision against.
-        foreach (GameObject obj in hitMe)
-        {
-            float boxBRotation = obj.transform.eulerAngles.z;
-            PolarBox boxB = GetPolarBox(obj); // The PolarBox that might collide with "boxA".
 
-            if (HitZ(positionZ, size.z, obj) && boxA.DoesItHit(boxB))
-            {
-                float radius = boxB.halfsize.r + boxA.halfsize.r; // Gets the distance the player should be from the center of the box
-                return new Polar(boxBRotation * Mathf.Deg2Rad, boxB.position.r - radius);
-            }
-        }
-        return position.ToRad();
+       float boxBRotation = obj.transform.eulerAngles.z;
+       PolarBox boxB = GetPolarBox(obj); // The PolarBox that might collide with "boxA".
+       Block type = obj.GetComponent<Blocky>().myType;
+       if ((type == Block.GROUND || type == Block.HALF) && HitZ(positionZ, size.z, obj) && boxA.DoesItHit(boxB))
+       {
+           float radius = boxB.halfsize.r + boxA.halfsize.r; // Gets the distance the player should be from the center of the box
+           return new Polar(boxBRotation * Mathf.Deg2Rad, boxB.position.r - radius);
+       }
+       
+       return position.ToRad();
     }
 
     /// <summary>
@@ -62,20 +65,18 @@ public class DoCollisions
     /// <param name="positionZ">The z position to place the object.</param>
     /// <param name="size">The size to assume of the object.</param>
     /// <returns>Returns the polar coordinates of where to place the object so it's outside of the collided object.</returns>
-    static public float ContactPointForward(Polar position, float positionZ, Vector3 size)
+    static public float ContactPointForward(Polar position, float positionZ, Vector3 size, GameObject obj)
     {
         PolarBox boxA = new PolarBox(position, size.y); // The PolarBox to check collision against.
-        foreach (GameObject obj in hitMe)
-        {
-            Polar position2 = position;
-            position2.r -= .1f;
-            PolarBox boxB = GetPolarBox(obj); // The PolarBox that might collide with "boxA".
+        Polar position2 = position;
+        position2.r -= .1f;
+        PolarBox boxB = GetPolarBox(obj); // The PolarBox that might collide with "boxA".
+        Block type = obj.GetComponent<Blocky>().myType;
 
-            if (HitZ(positionZ + .1f, size.z, obj, true) && boxA.DoesItHitForward(boxB))
-            {
-                float forward = obj.transform.localScale.z / 2 + size.z / 2;
-                return obj.transform.position.z - forward;
-            }
+        if ((type == Block.GROUND || type == Block.HALF) && HitZ(positionZ + .1f, size.z, obj, true) && boxA.DoesItHitForward(boxB))
+        {
+            float forward = obj.transform.localScale.z / 2 + size.z / 2;
+            return obj.transform.position.z - forward;
         }
         return positionZ;
     }
