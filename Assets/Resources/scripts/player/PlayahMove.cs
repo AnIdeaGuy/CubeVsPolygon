@@ -102,6 +102,14 @@ public class PlayahMove : MonoBehaviour
     /// How long the player can be invincible.
     /// </summary>
     public const float INV_MAX = 1;
+    /// <summary>
+    /// Whether or not the playah is hovering.
+    /// </summary>
+    private bool hovering = false;
+    /// <summary>
+    /// Whether or not the game is resetting.
+    /// </summary>
+    private bool resetting = false;
 
     void Start()
     {
@@ -116,11 +124,11 @@ public class PlayahMove : MonoBehaviour
     {
         if (!MakeLevel.paused)
         {
+            if (MakeLevel.readyToLevelUp)
+                hovering = true;
             if (alive)
             {
-                MakeLevel.resetThisFrame = false;
-                TheInput();
-
+                MakeLevel.UnresetLevel();
                 float x = transform.position.x;
                 float y = transform.position.y;
                 float r = Mathf.Sqrt(x * x + y * y);
@@ -130,31 +138,49 @@ public class PlayahMove : MonoBehaviour
                     r = -r;
                 location = new Polar(a, r);
                 locationZ = transform.position.z;
-                if (stepDirection != 0)
-                    Sidestep();
+
+                if (hovering)
+                {
+                    location.r *= .9f;
+                    if (location.r < .1f)
+                        location.r = 0;
+                    if (DisplayControl.displayControl.whiteOutIsFull)
+                    {
+                        hovering = false;
+                        location.a = -Mathf.PI / 2;
+                    }
+                }
                 else
                 {
-                    CuboDance();
-                    if (isDucking)
-                        DoDucking();
+                    MakeLevel.resetThisFrame = false;
+                    TheInput();
+
+                    if (stepDirection != 0)
+                        Sidestep();
                     else
-                        DoUnducking();
+                    {
+                        CuboDance();
+                        if (isDucking)
+                            DoDucking();
+                        else
+                            DoUnducking();
+                    }
+
+                    if (invFrames < INV_MAX)
+                    {
+                        cubo.GetComponent<Renderer>().enabled = !cubo.GetComponent<Renderer>().enabled;
+                        invFrames += Time.deltaTime;
+                    }
+                    else
+                        invFrames = INV_MAX;
+
+                    if (location.r > MakeLevel.killRadius)
+                        alive = false;
+                    Collision();
+
+                    if (locationZ < MakeLevel.pKillZ)
+                        alive = false;
                 }
-
-                if (invFrames < INV_MAX)
-                {
-                    cubo.GetComponent<Renderer>().enabled = !cubo.GetComponent<Renderer>().enabled;
-                    invFrames += Time.deltaTime;
-                }
-                else
-                    invFrames = INV_MAX;
-
-                if (location.r > MakeLevel.killRadius)
-                    alive = false;
-                Collision();
-
-                if (locationZ < MakeLevel.pKillZ)
-                    alive = false;
 
                 transform.position = new Vector3(Mathf.Cos(location.a) * location.r, Mathf.Sin(location.a) * location.r, locationZ);
                 transform.rotation = Quaternion.Euler(0, 0, location.a * Mathf.Rad2Deg);
@@ -164,12 +190,19 @@ public class PlayahMove : MonoBehaviour
                 cubo.SetActive(false);
                 hp = 0;
                 DisplayControl.displayControl.RestartHealth();
-                if (Input.GetButtonDown("Start"))
+                if (Input.GetButtonDown("Start") && !resetting)
+                {
+                    resetting = true;
+                    DisplayControl.displayControl.StartWhiteOut();
+                }
+
+                if (DisplayControl.displayControl.whiteOutIsFull)
                 {
                     MakeLevel.ResetLevel();
                     alive = true;
                     DoReset();
                     cubo.SetActive(true);
+                    resetting = false;
                 }
             }
         }
@@ -251,7 +284,8 @@ public class PlayahMove : MonoBehaviour
             stepProgress += STEP_SPEED * Time.deltaTime;
             if (stepProgress > 1)
                 stepProgress = 1;
-            float doAngle = initialStepAngle + dir * Mathf.PI * 2 / MakeLevel.sides * stepProgress;
+            float finalAngle = dir * Mathf.PI * 2 / MakeLevel.sides;
+            float doAngle = initialStepAngle + finalAngle * stepProgress;
             Vector3 cuboRotation = cubo.transform.localRotation.eulerAngles;
             location.a = doAngle;
             cuboRotation.z = 90 * -dir * stepProgress;
@@ -306,7 +340,8 @@ public class PlayahMove : MonoBehaviour
                     break;
 
                 case Block.SPIKE:
-                    ReduceHP(1);
+                    if (DoCollisions.GetPolarBox(obj).position.r > locationNew.r) // HOW? DAFUQ?
+                        ReduceHP(1);
                     break;
 
                 case Block.POWERUP:
@@ -488,6 +523,7 @@ public class PlayahMove : MonoBehaviour
         DisplayControl.displayControl.GameStart();
         invFrames = INV_MAX;
         cubo.GetComponent<Renderer>().enabled = true;
+        hovering = false;
     }
 
     /// <summary>

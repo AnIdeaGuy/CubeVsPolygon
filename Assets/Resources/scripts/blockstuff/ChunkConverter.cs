@@ -33,7 +33,7 @@ public class ChunkConverter : MonoBehaviour
         {
             Trace("Creating map...");
         }
-        _FileLocation = Application.dataPath;
+        _FileLocation = Application.dataPath + "\\chunks";
         _FileName = filename + ".xml";
         finalData = new LevelData();
     }
@@ -45,12 +45,14 @@ public class ChunkConverter : MonoBehaviour
             if (Input.GetKeyDown("s"))
             {
                 saveActive = true;
+                _FileName = filename + ".xml";
                 ResetEverything();
             }
 
             if (Input.GetKeyDown("l"))
             {
                 loadActive = true;
+                _FileName = filename + ".xml";
                 ResetEverything();
             }
 

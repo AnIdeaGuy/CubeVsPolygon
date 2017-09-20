@@ -86,7 +86,7 @@ public class DoCollisions
     /// </summary>
     /// <param name="obj">The GameObject to convert.</param>
     /// <returns>Returns the new PolarBox.</returns>
-    static private PolarBox GetPolarBox(GameObject obj)
+    static public PolarBox GetPolarBox(GameObject obj)
     {
         float x = obj.transform.position.x;
         float y = obj.transform.position.y;

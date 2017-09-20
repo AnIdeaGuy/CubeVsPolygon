@@ -1,26 +1,61 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// To be used by the main camera to display messages and UI things
 /// </summary>
 public class DisplayControl : MonoBehaviour
 {
+    static public DisplayControl displayControl;
+
     public GameObject gameOverFont;
     public GameObject healthIcon;
+    public GameObject whiteOut;
     public Transform canvas;
+
+    public ImageAnimation healthbar = null;
+
     private TextAnimation gameOver = null;
-    public ImageAnimation healthbar= null;
+
     private bool firstRun = true;
-    static public DisplayControl displayControl;
     private bool damaging = false;
     private RectTransform canvasRect;
     private bool firstFrame = true;
+
+    private GameObject whiteOutInstance;
+    private float whiteOutAlpha = 0;
+    private int whiteOutDir = 0;
+    private const float WHITE_OUT_SPEED = 4.0f;
+    private float whiteOutFullTimer = 0;
+    private const float WHITE_OUT_TIMER_MAX = .1f;
+
+    public bool whiteOutIsFull = false;
+
+    private Color fadeColor;
         
     public void GameStart()
     {
         RestartHealth();
+        StretchWhiteToScreen();
+    }
+
+    private void StretchWhiteToScreen()
+    {
+        RectTransform canvasRect = canvas.gameObject.GetComponent<RectTransform>();
+        whiteOutInstance.GetComponent<RectTransform>().sizeDelta = canvasRect.sizeDelta;
+        whiteOutInstance.transform.position = new Vector3(canvasRect.anchoredPosition.x, canvasRect.anchoredPosition.y, 1);
+    }
+
+    public void StartWhiteOut()
+    {
+        if (whiteOutDir == 0)
+        {
+            fadeColor = PlayahMove.alive ? Color.white : Color.black;
+            whiteOutDir = 1;
+            whiteOutAlpha = .1f;
+        }
     }
 
     public void RestartHealth()
@@ -76,6 +111,7 @@ public class DisplayControl : MonoBehaviour
     void Start()
     {
         displayControl = this;
+        whiteOutInstance = Instantiate(whiteOut, canvas);
         canvasRect = canvas.gameObject.GetComponent<RectTransform>();
     }
 
@@ -107,5 +143,41 @@ public class DisplayControl : MonoBehaviour
                 GameOverStart();
             gameOver.Update();
         }
-	}
+
+        if (whiteOut != null)
+        {
+            if (whiteOutAlpha >= 1)
+            {
+                whiteOutDir = -1;
+
+                if (whiteOutIsFull)
+                {
+                    if (whiteOutFullTimer > 0)
+                        whiteOutFullTimer -= Time.deltaTime;
+                    else
+                    {
+                        whiteOutIsFull = false;
+                    }
+                }
+                else
+                {
+                    whiteOutFullTimer = WHITE_OUT_TIMER_MAX;
+                    whiteOutIsFull = true;
+                }
+            }
+            if (whiteOutAlpha <= 0 && whiteOutDir == -1)
+            {
+                whiteOutAlpha = 0;
+                whiteOutDir = 0;
+            }
+            if (!whiteOutIsFull)
+            {
+                whiteOutAlpha += WHITE_OUT_SPEED * whiteOutDir * Time.deltaTime;
+            }
+
+            Color newFadeColor = fadeColor;
+            newFadeColor.a = whiteOutAlpha;
+            whiteOutInstance.GetComponent<Image>().color = newFadeColor;
+        }
+    }
 }

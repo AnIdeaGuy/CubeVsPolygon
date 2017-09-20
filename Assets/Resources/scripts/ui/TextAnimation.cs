@@ -16,6 +16,8 @@ public class TextAnimation
 
     public float time = 0;
 
+    public float width;
+
     /// <summary>
     /// Creates the text animation object.
     /// </summary>
@@ -27,7 +29,7 @@ public class TextAnimation
     {
         text = _text;
         char[] chars = text.ToCharArray();
-        float totalX = 0;
+        width = 0;
         float x = 0;
         foreach (char c in chars)
         {
@@ -37,11 +39,11 @@ public class TextAnimation
             RectTransform canvasRect = canvas.gameObject.GetComponent<RectTransform>();
             Character chara = new Character(c, obj, characterList.Count - 1, new Vector2(canvasRect.anchoredPosition.x + _position.x, canvasRect.anchoredPosition.y + _position.y));
             characterList.Add(chara);
-            totalX += chara.GetWidth();
+            width += chara.GetWidth();
         }
         foreach (Character c in characterList)
         {
-            Vector3 newPosition = new Vector3(c.originalPosition.x -totalX / 2 + x, c.originalPosition.y, 0);
+            Vector3 newPosition = new Vector3(c.originalPosition.x -width / 2 + x, c.originalPosition.y, 0);
             c.gameObject.transform.position = newPosition;
             c.originalPosition = newPosition;
             x += c.GetWidth();

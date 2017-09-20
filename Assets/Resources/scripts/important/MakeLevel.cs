@@ -9,15 +9,17 @@ public enum Block { AIR, GROUND, SPIKE, HALF, POWERUP };
 
 public class MakeLevel : MonoBehaviour
 {
+    static public MakeLevel makeLevel;
+
     public GameObject spike;
     public GameObject ground;
     public GameObject powerup;
     public GameObject half;
 
-    static public int sides = 12;
+    static public int sides = 3;
     public const int DEPTH = 3;
     static public Vector3 blockSize = new Vector3(2.0f, 1.0f, 1.0f);
-    public const float START_Z = 20.0f;
+    public const float START_Z = 16.0f;
     /// <summary>
     /// Whether or not the game is paused.
     /// </summary>
@@ -36,21 +38,29 @@ public class MakeLevel : MonoBehaviour
     static public float superRadius = 0;
     private LevelChunk currentChunk;
     private bool first = true;
-    static public MakeLevel level;
     static public bool resetThisFrame = false;
 
-    private List<LevelChunk> allChunks = new List<LevelChunk>();
+    static public bool readyToLevelUp = false;
+    private float timeSurvived = 0;
+    private float surviveThisLong;
+    private const float SURVIVAL_INCREMENT = 8.0f;
+    private const float SURVIVE_START = 20.0f;
+
+    private List<LevelChunk>[] allChunks = new List<LevelChunk>[12];
 
     private void Start()
     {
-        level = this;
+        makeLevel = this;
+        for (int i = 0; i < allChunks.Length; i++)
+            allChunks[i] = new List<LevelChunk>();
         SpawnBlanks();
+        surviveThisLong = SURVIVE_START;
     }
 
     /// <summary>
     /// Spawns a plain map to start the level with.
     /// </summary>
-    void SpawnBlanks()
+    private void SpawnBlanks()
     {
         currentChunk = new LevelChunk(25);
         for (int i = 0; i < 25; i++)
@@ -60,7 +70,7 @@ public class MakeLevel : MonoBehaviour
         }
     }
 
-    void Init()
+    private void Init()
     {
         LoadAllChunks();
         MakeRandomChunk();
@@ -85,10 +95,29 @@ public class MakeLevel : MonoBehaviour
                 SpawnThem(progressSinceLast);
             }
 
+            if (timeSurvived >= surviveThisLong)
+            {
+                if (sides < 12)
+                    IncreaseLevel();
+            }
+
+            if (readyToLevelUp)
+            {
+                if (DisplayControl.displayControl.whiteOutIsFull)
+                {
+                    readyToLevelUp = false;
+                    sides++;
+                    timeSurvived = 0;
+                    surviveThisLong += SURVIVAL_INCREMENT;
+                    ResetLevel(false);
+                }
+            }
+
+            timeSurvived += Time.deltaTime;
         }
     }
 
-    void DetermineSpawn()
+    private void DetermineSpawn()
     {
         Block[,] row = currentChunk.GetNextRow();
         if (row == null)
@@ -99,7 +128,7 @@ public class MakeLevel : MonoBehaviour
         spawnBar = row;
     }
 
-    void SpawnThem(float extra)
+    private void SpawnThem(float extra)
     {
         float radius = GetRadius(sides);
         radius = Mathf.Max(radius, GetRadius(10));
@@ -117,20 +146,41 @@ public class MakeLevel : MonoBehaviour
             }
     }
 
+    private void IncreaseLevel()
+    {
+        if (PlayahMove.alive)
+        {
+            DisplayControl.displayControl.StartWhiteOut();
+            readyToLevelUp = true;
+        }
+    }
+
     /// <summary>
     /// Resets the level.
     /// </summary>
-    static public void ResetLevel()
+    static public void ResetLevel(bool resetSides = true)
     {
         resetThisFrame = true;
+        if (resetSides)
+            sides = 3;
         DoCollisions.hitMe.Clear();
-        level.SpawnBlanks();
-        resetThisFrame = true;
+        makeLevel.SpawnBlanks();
+        makeLevel.timeSurvived = 0;
+        makeLevel.surviveThisLong = SURVIVE_START;
+        readyToLevelUp = false;
+    }
+
+    static public void UnresetLevel()
+    {
+        resetThisFrame = false;
     }
 
     private void MakeRandomChunk()
     {
-        currentChunk = allChunks[(int) Mathf.Floor(Random.Range(0, allChunks.Count-.1f))].Clone();
+        if (readyToLevelUp)
+            currentChunk = new LevelChunk(12);
+        else
+            currentChunk = allChunks[sides - 1][(int)Mathf.Floor(Random.Range(0, allChunks[sides - 1].Count - .1f))].Clone();
         currentChunk.Init();
     }
 
@@ -158,18 +208,15 @@ public class MakeLevel : MonoBehaviour
 
     public void LoadAllChunks()
     {
-        LoadThis("furst");
-        LoadThis("secund");
-        LoadThis("thurd");
-        LoadThis("furth");
-        LoadThis("suxth");
+        LoadThis("fakeout3", 3);
+        LoadThis("first4", 4);
     }
 
-    public void LoadThis(string name)
+    public void LoadThis(string name, int sideNumber)
     {
         ChunkConverter cc = gameObject.GetComponent<ChunkConverter>();
         cc.SetFile(name);
         cc.LoadChunk();
-        allChunks.Add(new LevelChunk(cc.CopyMap()));
+        allChunks[sideNumber - 1].Add(new LevelChunk(cc.CopyMap()));
     }
 }
