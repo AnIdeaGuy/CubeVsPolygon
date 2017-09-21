@@ -49,7 +49,7 @@ public class DoCollisions
        float boxBRotation = obj.transform.eulerAngles.z;
        PolarBox boxB = GetPolarBox(obj); // The PolarBox that might collide with "boxA".
        Block type = obj.GetComponent<Blocky>().myType;
-       if ((type == Block.GROUND || type == Block.HALF) && HitZ(positionZ, size.z, obj) && boxA.DoesItHit(boxB))
+       if (type == Block.GROUND && HitZ(positionZ, size.z, obj) && boxA.DoesItHit(boxB))
        {
            float radius = boxB.halfsize.r + boxA.halfsize.r; // Gets the distance the player should be from the center of the box
            return new Polar(boxBRotation * Mathf.Deg2Rad, boxB.position.r - radius);
@@ -112,7 +112,7 @@ public class DoCollisions
         float secondMin = secondObject.transform.position.z - secondHalfLength; // Minimum z of the second object.
 
         if (isForward)
-            return firstMax >= secondMin && secondMax > firstMin;
+            return firstMax > secondMin && secondMax > firstMin;
         else
             return firstMax > secondMin && firstMin < secondMax;
     }

@@ -27,7 +27,7 @@ public class DisplayControl : MonoBehaviour
     private GameObject whiteOutInstance;
     private float whiteOutAlpha = 0;
     private int whiteOutDir = 0;
-    private const float WHITE_OUT_SPEED = 4.0f;
+    private const float WHITE_OUT_SPEED = 2.0f;
     private float whiteOutFullTimer = 0;
     private const float WHITE_OUT_TIMER_MAX = .1f;
 

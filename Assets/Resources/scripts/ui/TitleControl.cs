@@ -1,22 +1,26 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
 public class TitleControl : MonoBehaviour
 {
     public GameObject title;
     public GameObject background;
+    public GameObject menuCursor;
     public Transform canvas;
 
     public GameObject BlankCharacterMenu;
 
     private TextAnimation playOp;
     private TextAnimation optionsOp;
-    private TextAnimation exitOp;
+    private TextAnimation quitOp;
     
     private GameObject titleInstance;
     private GameObject backgroundInstance;
+    private GameObject cursorInstance;
+
     private float time = 0;
     private Vector2 originalSize;
 
@@ -31,9 +35,15 @@ public class TitleControl : MonoBehaviour
         titleInstance = Instantiate(title, canvas);
         originalSize = titleInstance.transform.localScale;
         RectTransform canvasRect = canvas.transform.gameObject.GetComponent<RectTransform>();
-        playOp = new TextAnimation("PLAY", new Vector2(-canvasRect.sizeDelta.x / 2 + 120, canvasRect.anchoredPosition.y - 100), BlankCharacterMenu, canvas);
-        optionsOp = new TextAnimation("OPTIONS", new Vector2(-canvasRect.sizeDelta.x / 2 + 120, canvasRect.anchoredPosition.y - 164), BlankCharacterMenu, canvas);
-        exitOp = new TextAnimation("EXIT", new Vector2(-canvasRect.sizeDelta.x / 2 + 120, canvasRect.anchoredPosition.y - 228), BlankCharacterMenu, canvas);
+        cursorInstance = Instantiate(menuCursor, canvas);
+
+        playOp = new TextAnimation("PLAY", new Vector2(-canvasRect.anchoredPosition.x + 120, canvasRect.anchoredPosition.y - 100), BlankCharacterMenu, canvas);
+        optionsOp = new TextAnimation("OPTIONS", new Vector2(-canvasRect.anchoredPosition.x + 120, canvasRect.anchoredPosition.y - 164), BlankCharacterMenu, canvas);
+        quitOp = new TextAnimation("EXIT", new Vector2(-canvasRect.anchoredPosition.x + 120, canvasRect.anchoredPosition.y - 228), BlankCharacterMenu, canvas);
+
+        cursorInstance.GetComponent<RectTransform>().sizeDelta = new Vector2(optionsOp.width * 1.5f , 70);
+        cursorInstance.GetComponent<Image>().color = new Color(1, 1, 1, .5f);
+        cursorInstance.transform.position = new Vector2(120, canvasRect.sizeDelta.y - 135);
     }
 	
 	void Update ()
@@ -48,10 +58,16 @@ public class TitleControl : MonoBehaviour
     {
         prevSelected = selectionIndex;
         if (Input.GetButtonDown("Up"))
+        {
+            gameObject.GetComponent<AudioSource>().Play();
             selectionIndex--;
+        }
 
         if (Input.GetButtonDown("Duck"))
+        {
+            gameObject.GetComponent<AudioSource>().Play();
             selectionIndex++;
+        }
 
         if (Input.GetButtonDown("Start"))
             hitStart = true;
@@ -67,7 +83,7 @@ public class TitleControl : MonoBehaviour
     {
         playOp.Update();
         optionsOp.Update();
-        exitOp.Update();
+        quitOp.Update();
 
         bool sameSelected = prevSelected == selectionIndex;
         
@@ -76,7 +92,7 @@ public class TitleControl : MonoBehaviour
              case 0: // Play
              if (!sameSelected)
              {
-             playOp.KillTheChars();
+                playOp.KillTheChars();
                 playOp = MakeBounceText("PLAY", 100);
              }
              if (hitStart)
@@ -92,8 +108,8 @@ public class TitleControl : MonoBehaviour
              case 2: // Exit
              if (!sameSelected)
              {
-                 exitOp.KillTheChars();
-                 exitOp = MakeBounceText("EXIT", 228);
+                 quitOp.KillTheChars();
+                 quitOp = MakeBounceText("EXIT", 228);
              }
              if (hitStart)
                  Application.Quit();
@@ -101,10 +117,21 @@ public class TitleControl : MonoBehaviour
         }
     }
 
-    private BounceAnimation MakeBounceText(string str, float y)
+    private void MakeCursor(float y)
     {
         RectTransform canvasRect = canvas.transform.gameObject.GetComponent<RectTransform>();
-        return new BounceAnimation(str, new Vector2(-canvasRect.sizeDelta.x / 2 + 120, canvasRect.anchoredPosition.y - y), BlankCharacterMenu, canvas);
+        Destroy(cursorInstance);
+        cursorInstance = Instantiate(menuCursor, canvas);
+        cursorInstance.GetComponent<RectTransform>().sizeDelta = new Vector2(optionsOp.width * 1.5f, 70);
+        cursorInstance.transform.position = new Vector2(120, canvasRect.sizeDelta.y - y - 35);
+        cursorInstance.GetComponent<Image>().color = new Color(1, 1, 1, .5f);
+    }
+
+    private BounceAnimation MakeBounceText(string str, float y)
+    {
+        MakeCursor(y);
+        RectTransform canvasRect = canvas.transform.gameObject.GetComponent<RectTransform>();
+        return new BounceAnimation(str, new Vector2(-canvasRect.anchoredPosition.x + 120, canvasRect.anchoredPosition.y - y), BlankCharacterMenu, canvas);
     }
 
     private void HandleImages()

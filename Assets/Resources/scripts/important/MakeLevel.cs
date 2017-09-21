@@ -16,8 +16,8 @@ public class MakeLevel : MonoBehaviour
     public GameObject powerup;
     public GameObject half;
 
-    static public int sides = 3;
-    public const int DEPTH = 3;
+    static public int sides;
+    public const int DEPTH = 4; // Powerups on depth-4, nothing else
     static public Vector3 blockSize = new Vector3(2.0f, 1.0f, 1.0f);
     public const float START_Z = 16.0f;
     /// <summary>
@@ -30,7 +30,7 @@ public class MakeLevel : MonoBehaviour
     private Block[,] spawnBar = new Block[sides, DEPTH]; // NOTE: x wraps around the pipe, y goes toward the center.
     private float progress = 0.0f;
     private float progressSinceLast = 0.0f;
-    static public float speed = 8.0f;
+    static public float speed = 14.0f;
     static public float killZ = -12.0f;
     static public float pKillZ = -10.0f;
     static public float killRadius;
@@ -45,11 +45,13 @@ public class MakeLevel : MonoBehaviour
     private float surviveThisLong;
     private const float SURVIVAL_INCREMENT = 8.0f;
     private const float SURVIVE_START = 20.0f;
+    private const int START_LEVEL = 5;
 
     private List<LevelChunk>[] allChunks = new List<LevelChunk>[12];
 
     private void Start()
     {
+        sides = START_LEVEL;
         makeLevel = this;
         for (int i = 0; i < allChunks.Length; i++)
             allChunks[i] = new List<LevelChunk>();
@@ -85,6 +87,18 @@ public class MakeLevel : MonoBehaviour
         }
         if (!paused)
         {
+            if (readyToLevelUp)
+            {
+                if (DisplayControl.displayControl.whiteOutIsFull)
+                {
+                    readyToLevelUp = false;
+                    sides++;
+                    timeSurvived = 0;
+                    surviveThisLong += SURVIVAL_INCREMENT;
+                    ResetLevel(false);
+                    MakeRandomChunk();
+                }
+            }
             float changeInZ = speed * Time.deltaTime;
             progress += changeInZ;
             progressSinceLast += changeInZ;
@@ -97,20 +111,8 @@ public class MakeLevel : MonoBehaviour
 
             if (timeSurvived >= surviveThisLong)
             {
-                if (sides < 12)
+                if (sides < 7)
                     IncreaseLevel();
-            }
-
-            if (readyToLevelUp)
-            {
-                if (DisplayControl.displayControl.whiteOutIsFull)
-                {
-                    readyToLevelUp = false;
-                    sides++;
-                    timeSurvived = 0;
-                    surviveThisLong += SURVIVAL_INCREMENT;
-                    ResetLevel(false);
-                }
             }
 
             timeSurvived += Time.deltaTime;
@@ -131,7 +133,7 @@ public class MakeLevel : MonoBehaviour
     private void SpawnThem(float extra)
     {
         float radius = GetRadius(sides);
-        radius = Mathf.Max(radius, GetRadius(10));
+        radius = Mathf.Max(radius, GetRadius(12));
         superRadius = radius;
         killRadius = radius + 4;
         for (int i = 0; i < sides; i++)
@@ -152,6 +154,7 @@ public class MakeLevel : MonoBehaviour
         {
             DisplayControl.displayControl.StartWhiteOut();
             readyToLevelUp = true;
+            gameObject.GetComponent<AudioSource>().Play();
         }
     }
 
@@ -162,7 +165,7 @@ public class MakeLevel : MonoBehaviour
     {
         resetThisFrame = true;
         if (resetSides)
-            sides = 3;
+            sides = START_LEVEL;
         DoCollisions.hitMe.Clear();
         makeLevel.SpawnBlanks();
         makeLevel.timeSurvived = 0;
@@ -180,7 +183,7 @@ public class MakeLevel : MonoBehaviour
         if (readyToLevelUp)
             currentChunk = new LevelChunk(12);
         else
-            currentChunk = allChunks[sides - 1][(int)Mathf.Floor(Random.Range(0, allChunks[sides - 1].Count - .1f))].Clone();
+            currentChunk = allChunks[sides - 1][(int)Mathf.Floor(Random.Range(0, allChunks[sides - 1].Count - .01f))].Clone();
         currentChunk.Init();
     }
 
@@ -208,8 +211,30 @@ public class MakeLevel : MonoBehaviour
 
     public void LoadAllChunks()
     {
-        LoadThis("fakeout3", 3);
-        LoadThis("first4", 4);
+        LoadThis("first5", 5);
+        LoadThis("second5", 5);
+        LoadThis("ducking5", 5);
+        LoadThis("fifth5", 5);
+        LoadThis("actualfifth5", 5);
+        LoadThis("powerup5", 5);
+        
+        LoadThis("first6", 6);
+        LoadThis("pitfall6", 6);
+        LoadThis("third6", 6);
+        LoadThis("ducking6", 6);
+        LoadThis("number6", 6);
+        LoadThis("sexy6", 6);
+        LoadThis("uhhh6", 6);
+        LoadThis("final6", 6);
+
+        LoadThis("first7", 7);
+        LoadThis("second7", 7);
+        LoadThis("pitfall7", 7);
+        LoadThis("powerup7", 7);
+        LoadThis("butt7", 7);
+        LoadThis("ass7", 7);
+        LoadThis("braindead7", 7);
+        LoadThis("final7", 7);
     }
 
     public void LoadThis(string name, int sideNumber)

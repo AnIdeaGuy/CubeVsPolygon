@@ -12,6 +12,12 @@ public class PlayahMove : MonoBehaviour
     /// </summary>
     public GameObject cubo;
 
+    public AudioClip soundOwwy;
+    public AudioClip soundJump;
+    public AudioClip soundDuck;
+    public AudioClip soundDeath;
+    public AudioClip soundCollect;
+
     /// <summary>
     /// The player position in polar coordinates.
     /// </summary>
@@ -59,11 +65,11 @@ public class PlayahMove : MonoBehaviour
     /// <summary>
     /// The power of the jump.
     /// </summary>
-    public const float JUMP_STRENGTH = 24.0f;
+    public const float JUMP_STRENGTH = 14.0f;
     /// <summary>
     /// Ther power of the gravity.
     /// </summary>
-    private const float GRAVITY = 100.0f;
+    private const float GRAVITY = 60.0f;
     /// <summary>
     /// The target z that the playah will always try to get back to as long as there isn't a block in the way.
     /// </summary>
@@ -141,6 +147,10 @@ public class PlayahMove : MonoBehaviour
 
                 if (hovering)
                 {
+                    stepDirection = 0;
+                    stepDirectionBuffer = 0;
+                    stepProgress = 1;
+                    initialStepAngle = -Mathf.PI / 2;
                     location.r *= .9f;
                     if (location.r < .1f)
                         location.r = 0;
@@ -148,6 +158,7 @@ public class PlayahMove : MonoBehaviour
                     {
                         hovering = false;
                         location.a = -Mathf.PI / 2;
+                        cubo.transform.localRotation = Quaternion.identity;
                     }
                 }
                 else
@@ -172,7 +183,10 @@ public class PlayahMove : MonoBehaviour
                         invFrames += Time.deltaTime;
                     }
                     else
+                    {
                         invFrames = INV_MAX;
+                        cubo.GetComponent<Renderer>().enabled = true;
+                    }
 
                     if (location.r > MakeLevel.killRadius)
                         alive = false;
@@ -187,6 +201,8 @@ public class PlayahMove : MonoBehaviour
             }
             else
             {
+                if (cubo.activeSelf)
+                    PlaySound(soundDeath);
                 cubo.SetActive(false);
                 hp = 0;
                 DisplayControl.displayControl.RestartHealth();
@@ -215,10 +231,14 @@ public class PlayahMove : MonoBehaviour
     {
         isDucking = Input.GetButton("Duck");
 
+        if (Input.GetButtonDown("Duck"))
+            PlaySound(soundDuck);
+
         if (Input.GetButtonDown("Jump"))
         {
             if (isGrounded)
             {
+                PlaySound(soundJump);
                 upVelocity = JUMP_STRENGTH;
             }
         }
@@ -247,7 +267,10 @@ public class PlayahMove : MonoBehaviour
         if (Input.GetButtonDown("Left"))
         {
             if (stepDirection == 0)
+            {
                 SetStepStart();
+                Camera.main.GetComponent<PlayahCam>().StartRotation();
+            }
             if (stepDirection <= 0)
             {
                 stepDirection--;
@@ -261,7 +284,10 @@ public class PlayahMove : MonoBehaviour
         if (Input.GetButtonDown("Right"))
         {
             if (stepDirection == 0)
+            {
                 SetStepStart();
+                Camera.main.GetComponent<PlayahCam>().StartRotation();
+            }
             if (stepDirection >= 0)
             {
                 stepDirection++;
@@ -284,8 +310,7 @@ public class PlayahMove : MonoBehaviour
             stepProgress += STEP_SPEED * Time.deltaTime;
             if (stepProgress > 1)
                 stepProgress = 1;
-            float finalAngle = dir * Mathf.PI * 2 / MakeLevel.sides;
-            float doAngle = initialStepAngle + finalAngle * stepProgress;
+            float doAngle = initialStepAngle + dir * Mathf.PI * 2 / MakeLevel.sides * stepProgress;
             Vector3 cuboRotation = cubo.transform.localRotation.eulerAngles;
             location.a = doAngle;
             cuboRotation.z = 90 * -dir * stepProgress;
@@ -321,22 +346,26 @@ public class PlayahMove : MonoBehaviour
             switch (block)
             {
                 case Block.GROUND:
-                    bool floorSnap = SnapToGround(obj);
-                    SnapToWall(obj);
-                    if (GetVerticalMovement() < 0)
-                        location = locationNew.ToRad();
-                    if (!isGrounded)
+                    if (DoCollisions.GetPolarBox(obj).position.r > locationNew.r)
                     {
-                        if (floorSnap)
+                        SnapToWall(obj);
+                        bool floorSnap = SnapToGround(obj);
+                        if (GetVerticalMovement() < 0)
+                            location = locationNew.ToRad();
+                        PolarBox objBox = DoCollisions.GetPolarBox(obj);
+                        if (!isGrounded)
                         {
-                            isGrounded = true;
-                            upVelocity = 0;
-                            downVelocity = 0;
-                            justFall = false;
+                            if (floorSnap)
+                            {
+                                isGrounded = true;
+                                upVelocity = 0;
+                                downVelocity = 0;
+                                justFall = false;
+                            }
                         }
+                        else if (obj.transform.position.z - MakeLevel.blockSize.z / 2 > transform.position.z + transform.localScale.z / 2 || obj.transform.position.z - MakeLevel.blockSize.z / 2 > locationZ + transform.localScale.z / 2 || objBox.min.r >= location.r + transform.localScale.x / 2)
+                            justFall = false;
                     }
-                    else
-                        justFall = false;
                     break;
 
                 case Block.SPIKE:
@@ -346,8 +375,11 @@ public class PlayahMove : MonoBehaviour
 
                 case Block.POWERUP:
                     if (hp < HP_MAX)
+                    {
                         hp = Mathf.Min(hp + 1, HP_MAX);
-                    DisplayControl.displayControl.RestartHealth();
+                        DisplayControl.displayControl.RestartHealth();
+                    }
+                    PlaySound(soundCollect);
                     obj.GetComponent<Blocky>().KillMe();
                     // TODO: Effects and shit
                     break;
@@ -355,22 +387,7 @@ public class PlayahMove : MonoBehaviour
                 case Block.HALF:
                     if (!isDucking)
                     {
-                        bool floorSnap2 = SnapToGround(obj);
                         SnapToWall(obj);
-                        if (GetVerticalMovement() < 0)
-                            location = locationNew.ToRad();
-                        if (!isGrounded)
-                        {
-                            if (floorSnap2)
-                            {
-                                isGrounded = true;
-                                upVelocity = 0;
-                                downVelocity = 0;
-                                justFall = false;
-                            }
-                        }
-                        else
-                            justFall = false;
                     }
                     break;
             }
@@ -436,10 +453,16 @@ public class PlayahMove : MonoBehaviour
         {
             hp -= amount;
             if (hp <= 0)
+            {
                 alive = false;
+            }
             else
+            {
                 invFrames = 0;
+                PlaySound(soundOwwy);
+            }
             DisplayControl.displayControl.StartDamageAnimation();
+            
         }
     }
 
@@ -453,6 +476,12 @@ public class PlayahMove : MonoBehaviour
         return changeInRadius != 0 ? changeInRadius : .1f;
     }
 
+    private void PlaySound(AudioClip clip)
+    {
+        gameObject.GetComponent<AudioSource>().clip = clip;
+        gameObject.GetComponent<AudioSource>().Play();
+    }
+
     /// <summary>
     /// Snaps the playah to the ground.
     /// </summary>
@@ -464,7 +493,7 @@ public class PlayahMove : MonoBehaviour
         location2.r += GetVerticalMovement();
         float oldRadius = location2.r;
         Vector3 fakeScale = transform.localScale;
-        fakeScale.z *= .5f;
+        fakeScale.z *= 0; // THIS MAKES IT WORK?
         location2 = DoCollisions.ContactPointDown(location2, locationZ, fakeScale, obj);
         if (oldRadius == location2.r)
             return false;
